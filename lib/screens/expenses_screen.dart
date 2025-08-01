@@ -14,7 +14,7 @@ class ExpensesScreen extends StatefulWidget {
 }
 
 class ExpensesScreenState extends State<ExpensesScreen> {
-  final List<String> _categories = [
+  final List<String> _expenseCategories = [
     'Food & Dining',
     'Transportation',
     'Shopping',
@@ -27,6 +27,15 @@ class ExpensesScreenState extends State<ExpensesScreen> {
     'Other'
   ];
 
+  final List<String> _incomeCategories = [
+    'Salary',
+    'Freelance',
+    'Investment',
+    'Gift',
+    'Refund',
+    'Other'
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -34,18 +43,60 @@ class ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void addExpense() {
-    _showExpenseDialog();
+    _showAddOptionsDialog();
+  }
+
+  void _showAddOptionsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Transaction'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.remove_circle, color: Colors.red),
+              title: const Text('Add Expense'),
+              subtitle: const Text('Money spent'),
+              onTap: () {
+                Navigator.pop(context);
+                _showExpenseDialog();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_circle, color: Colors.green),
+              title: const Text('Add Income'),
+              subtitle: const Text('Money received'),
+              onTap: () {
+                Navigator.pop(context);
+                _showIncomeDialog();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _editExpense(Expense expense) {
-    _showExpenseDialog(expense: expense);
+    if (expense.type == 'income') {
+      _showIncomeDialog(expense: expense);
+    } else {
+      _showExpenseDialog(expense: expense);
+    }
   }
 
   void _deleteExpense(Expense expense) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Expense'),
+        title: const Text('Delete Transaction'),
         content: Text('Are you sure you want to delete "${expense.title}"?'),
         actions: [
           TextButton(
@@ -58,7 +109,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
               expenseProvider.deleteExpense(expense.id);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Expense deleted successfully')),
+                const SnackBar(content: Text('Transaction deleted successfully')),
               );
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -72,7 +123,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
     final titleController = TextEditingController(text: expense?.title ?? '');
     final amountController = TextEditingController(text: expense?.amount.toString() ?? '');
     final descriptionController = TextEditingController(text: expense?.description ?? '');
-    String selectedCategory = expense?.category ?? _categories[0];
+    String selectedCategory = expense?.category ?? _expenseCategories[0];
 
     showDialog(
       context: context,
@@ -106,7 +157,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                   labelText: 'Category',
                   border: OutlineInputBorder(),
                 ),
-                items: _categories.map((category) {
+                items: _expenseCategories.map((category) {
                   return DropdownMenuItem(
                     value: category,
                     child: Text(category),
@@ -166,6 +217,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                   description: description,
                   date: DateTime.now(),
                   userId: '1',
+                  type: 'expense',
                 );
                 expenseProvider.addExpense(newExpense);
               } else {
@@ -193,68 +245,376 @@ class ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
+  void _showIncomeDialog({Expense? expense}) {
+    final titleController = TextEditingController(text: expense?.title ?? '');
+    final amountController = TextEditingController(text: expense?.amount.toString() ?? '');
+    final descriptionController = TextEditingController(text: expense?.description ?? '');
+    String selectedCategory = expense?.category ?? _incomeCategories[0];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(expense == null ? 'Add Income' : 'Edit Income'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  border: OutlineInputBorder(),
+                  prefixText: '₹',
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  border: OutlineInputBorder(),
+                ),
+                items: _incomeCategories.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  selectedCategory = value!;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Description (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final title = titleController.text.trim();
+              final amountText = amountController.text.trim();
+              final description = descriptionController.text.trim();
+
+              if (title.isEmpty || amountText.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please fill all required fields')),
+                );
+                return;
+              }
+
+              final amount = double.tryParse(amountText);
+              if (amount == null || amount <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid amount')),
+                );
+                return;
+              }
+
+              final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+
+              if (expense == null) {
+                // Add new income
+                final newIncome = Expense(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  title: title,
+                  amount: amount,
+                  category: selectedCategory,
+                  description: description,
+                  date: DateTime.now(),
+                  userId: '1',
+                  type: 'income',
+                );
+                expenseProvider.addExpense(newIncome);
+              } else {
+                // Edit existing income
+                final updatedIncome = expense.copyWith(
+                  title: title,
+                  amount: amount,
+                  category: selectedCategory,
+                  description: description,
+                );
+                expenseProvider.updateExpense(updatedIncome);
+              }
+
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(expense == null ? 'Income added successfully' : 'Income updated successfully'),
+                ),
+              );
+            },
+            child: Text(expense == null ? 'Add' : 'Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBudgetDialog() {
+    final budgetController = TextEditingController(
+      text: Provider.of<ExpenseProvider>(context, listen: false).monthlyBudget.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Monthly Budget'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: budgetController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Monthly Budget',
+                border: OutlineInputBorder(),
+                prefixText: '₹',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final budgetText = budgetController.text.trim();
+              final budget = double.tryParse(budgetText);
+
+              if (budget == null || budget <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid budget amount')),
+                );
+                return;
+              }
+
+              final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+              expenseProvider.setMonthlyBudget(budget);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Monthly budget updated successfully')),
+              );
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final expenseProvider = Provider.of<ExpenseProvider>(context);
     final user = authProvider.currentUser;
     final expenses = expenseProvider.expenses;
-    final totalAmount = expenseProvider.totalAmount;
+    final monthlyBudget = expenseProvider.monthlyBudget;
+    final totalExpenses = expenseProvider.totalExpenses;
+    final totalIncome = expenseProvider.totalIncome;
+    final remainingBudget = expenseProvider.remainingBudget;
 
     return Column(
       children: [
-        // Summary Card
+        // Budget Cards
         Container(
           margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // Monthly Budget Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
                   children: [
-                    const Text(
-                      'Total Expenses',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Monthly Budget',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '₹${monthlyBudget.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '₹${totalAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    IconButton(
+                      onPressed: _showBudgetDialog,
+                      icon: const Icon(Icons.edit, color: Colors.white),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+              // Balance Card
               Container(
-                padding: const EdgeInsets.all(12),
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: remainingBudget >= 0 
+                        ? [Colors.green.shade400, Colors.green.shade600]
+                        : [Colors.red.shade400, Colors.red.shade600],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
-                  Icons.account_balance_wallet,
-                  color: Colors.white,
-                  size: 24,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Remaining Budget',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '₹${remainingBudget.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        remainingBudget >= 0 ? Icons.trending_up : Icons.trending_down,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
 
-        // Expenses List
+        // Summary Row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                                             const Text(
+                         'Debit',
+                         style: TextStyle(
+                           fontSize: 12,
+                           color: Colors.red,
+                         ),
+                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '₹${totalExpenses.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                                             const Text(
+                         'Credit',
+                         style: TextStyle(
+                           fontSize: 12,
+                           color: Colors.green,
+                         ),
+                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '₹${totalIncome.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Transactions List
         Expanded(
           child: expenses.isEmpty
               ? const Center(
@@ -268,7 +628,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'No expenses yet',
+                        'No transactions yet',
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey,
@@ -276,7 +636,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Tap the + button to add your first expense',
+                        'Tap the + button to add your first transaction',
                         style: TextStyle(
                           color: Colors.grey,
                         ),
@@ -289,18 +649,20 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                   itemCount: expenses.length,
                   itemBuilder: (context, index) {
                     final expense = expenses[index];
+                    final isIncome = expense.type == 'income';
+                    
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _getCategoryColor(expense.category).withValues(alpha: 0.1),
+                            color: (isIncome ? Colors.green : _getCategoryColor(expense.category)).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
-                            _getCategoryIcon(expense.category),
-                            color: _getCategoryColor(expense.category),
+                            isIncome ? Icons.add_circle : _getCategoryIcon(expense.category),
+                            color: isIncome ? Colors.green : _getCategoryColor(expense.category),
                           ),
                         ),
                         title: Text(
@@ -330,10 +692,10 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '-₹${expense.amount.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              '${isIncome ? '+' : '-'}₹${expense.amount.toStringAsFixed(2)}',
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.red,
+                                color: isIncome ? Colors.green : Colors.red,
                                 fontSize: 16,
                               ),
                             ),

@@ -52,6 +52,11 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     required String confirmPassword,
     String? phoneNumber,
+    required String roleInFamily,
+    required List<FamilyMember> familyMembers,
+    required List<Dependency> dependencies,
+    required double totalFamilyIncome,
+    required List<String> budgetPreferences,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -62,6 +67,11 @@ class AuthProvider extends ChangeNotifier {
       password: password,
       confirmPassword: confirmPassword,
       phoneNumber: phoneNumber,
+      roleInFamily: roleInFamily,
+      familyMembers: familyMembers,
+      dependencies: dependencies,
+      totalFamilyIncome: totalFamilyIncome,
+      budgetPreferences: budgetPreferences,
     );
 
     if (result['success']) {

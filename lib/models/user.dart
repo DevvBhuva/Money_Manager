@@ -4,6 +4,13 @@ class User {
   final String name;
   final String? phoneNumber;
   final DateTime createdAt;
+  
+  // Family details
+  final String roleInFamily; // son, daughter, husband, wife, father, mother, etc.
+  final List<FamilyMember> familyMembers;
+  final List<Dependency> dependencies;
+  final double totalFamilyIncome;
+  final List<String> budgetPreferences; // daily, monthly, quarterly, individual
 
   User({
     required this.id,
@@ -11,6 +18,11 @@ class User {
     required this.name,
     this.phoneNumber,
     required this.createdAt,
+    required this.roleInFamily,
+    required this.familyMembers,
+    required this.dependencies,
+    required this.totalFamilyIncome,
+    required this.budgetPreferences,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -20,6 +32,17 @@ class User {
       name: json['name'],
       phoneNumber: json['phoneNumber'],
       createdAt: DateTime.parse(json['createdAt']),
+      roleInFamily: json['roleInFamily'] ?? 'Individual',
+      familyMembers: (json['familyMembers'] as List<dynamic>?)
+          ?.map((member) => FamilyMember.fromJson(member))
+          .toList() ?? [],
+      dependencies: (json['dependencies'] as List<dynamic>?)
+          ?.map((dep) => Dependency.fromJson(dep))
+          .toList() ?? [],
+      totalFamilyIncome: (json['totalFamilyIncome'] as num?)?.toDouble() ?? 0.0,
+      budgetPreferences: (json['budgetPreferences'] as List<dynamic>?)
+          ?.map((pref) => pref.toString())
+          .toList() ?? [],
     );
   }
 
@@ -30,6 +53,11 @@ class User {
       'name': name,
       'phoneNumber': phoneNumber,
       'createdAt': createdAt.toIso8601String(),
+      'roleInFamily': roleInFamily,
+      'familyMembers': familyMembers.map((member) => member.toJson()).toList(),
+      'dependencies': dependencies.map((dep) => dep.toJson()).toList(),
+      'totalFamilyIncome': totalFamilyIncome,
+      'budgetPreferences': budgetPreferences,
     };
   }
 
@@ -39,6 +67,11 @@ class User {
     String? name,
     String? phoneNumber,
     DateTime? createdAt,
+    String? roleInFamily,
+    List<FamilyMember>? familyMembers,
+    List<Dependency>? dependencies,
+    double? totalFamilyIncome,
+    List<String>? budgetPreferences,
   }) {
     return User(
       id: id ?? this.id,
@@ -46,6 +79,79 @@ class User {
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       createdAt: createdAt ?? this.createdAt,
+      roleInFamily: roleInFamily ?? this.roleInFamily,
+      familyMembers: familyMembers ?? this.familyMembers,
+      dependencies: dependencies ?? this.dependencies,
+      totalFamilyIncome: totalFamilyIncome ?? this.totalFamilyIncome,
+      budgetPreferences: budgetPreferences ?? this.budgetPreferences,
     );
+  }
+}
+
+class FamilyMember {
+  final String name;
+  final String relationship; // son, daughter, husband, wife, father, mother, etc.
+  final double? monthlyIncome;
+  final String? occupation;
+
+  FamilyMember({
+    required this.name,
+    required this.relationship,
+    this.monthlyIncome,
+    this.occupation,
+  });
+
+  factory FamilyMember.fromJson(Map<String, dynamic> json) {
+    return FamilyMember(
+      name: json['name'],
+      relationship: json['relationship'],
+      monthlyIncome: (json['monthlyIncome'] as num?)?.toDouble(),
+      occupation: json['occupation'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'relationship': relationship,
+      'monthlyIncome': monthlyIncome,
+      'occupation': occupation,
+    };
+  }
+}
+
+class Dependency {
+  final String name;
+  final String type; // housewife, elder parent, child, etc.
+  final String? relationship;
+  final int? age;
+  final String? specialNeeds;
+
+  Dependency({
+    required this.name,
+    required this.type,
+    this.relationship,
+    this.age,
+    this.specialNeeds,
+  });
+
+  factory Dependency.fromJson(Map<String, dynamic> json) {
+    return Dependency(
+      name: json['name'],
+      type: json['type'],
+      relationship: json['relationship'],
+      age: json['age'],
+      specialNeeds: json['specialNeeds'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'type': type,
+      'relationship': relationship,
+      'age': age,
+      'specialNeeds': specialNeeds,
+    };
   }
 } 

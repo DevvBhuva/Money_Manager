@@ -85,6 +85,11 @@ class AuthService {
     required String password,
     required String confirmPassword,
     String? phoneNumber,
+    required String roleInFamily,
+    required List<FamilyMember> familyMembers,
+    required List<Dependency> dependencies,
+    required double totalFamilyIncome,
+    required List<String> budgetPreferences,
   }) async {
     try {
       // Simulate API delay
@@ -115,6 +120,11 @@ class AuthService {
         'password': password,
         'phoneNumber': phoneNumber,
         'createdAt': DateTime.now().toIso8601String(),
+        'roleInFamily': roleInFamily,
+        'familyMembers': familyMembers.map((member) => member.toJson()).toList(),
+        'dependencies': dependencies.map((dep) => dep.toJson()).toList(),
+        'totalFamilyIncome': totalFamilyIncome,
+        'budgetPreferences': budgetPreferences,
       };
 
       // Add to simulated database

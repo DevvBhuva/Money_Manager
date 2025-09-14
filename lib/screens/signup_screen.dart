@@ -21,7 +21,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _phoneController = TextEditingController();
   
   // Family details
-  String _selectedRole = 'Individual';
+  String? _selectedRole;
   final List<FamilyMember> _familyMembers = [];
   final List<Dependency> _dependencies = [];
   final List<String> _selectedBudgetPreferences = [];
@@ -126,15 +126,67 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  // ========== STEP VALIDATION METHODS ==========
+
+  bool _validateStep(int step) {
+    switch (step) {
+      case 0: // Basic Information
+        return _validateBasicInfoStep();
+      case 1: // Family Details
+        return _validateFamilyDetailsStep();
+      case 2: // Dependencies
+        return _validateDependenciesStep();
+      case 3: // Budget Preferences
+        return _validateBudgetPreferencesStep();
+      default:
+        return false;
+    }
+  }
+
+  bool _validateBasicInfoStep() {
+    return _formKey.currentState?.validate() ?? false;
+  }
+
+  bool _validateFamilyDetailsStep() {
+    if (_selectedRole == null) {
+      _showValidationError('Please select your role in family');
+      return false;
+    }
+    return true;
+  }
+
+  bool _validateDependenciesStep() {
+    // Dependencies are optional, so this step is always valid
+    return true;
+  }
+
+  bool _validateBudgetPreferencesStep() {
+    if (_selectedBudgetPreferences.isEmpty) {
+      _showValidationError('Please select at least one budget preference');
+      return false;
+    }
+    return true;
+  }
+
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   void _addFamilyMember() {
     setState(() {
       _familyNameControllers.add(TextEditingController());
       _familyIncomeControllers.add(TextEditingController());
       _familyOccupationControllers.add(TextEditingController());
-      _familyRelationships.add('Son');
+      _familyRelationships.add('');
       _familyMembers.add(FamilyMember(
         name: '',
-        relationship: 'Son',
+        relationship: '',
         monthlyIncome: 0,
         occupation: '',
       ));
@@ -159,12 +211,12 @@ class _SignupScreenState extends State<SignupScreen> {
       _dependencyNameControllers.add(TextEditingController());
       _dependencyAgeControllers.add(TextEditingController());
       _dependencySpecialNeedsControllers.add(TextEditingController());
-      _dependencyTypes.add('Housewife');
-      _dependencyRelationships.add('Spouse');
+      _dependencyTypes.add('');
+      _dependencyRelationships.add('');
       _dependencies.add(Dependency(
         name: '',
-        type: 'Housewife',
-        relationship: 'Spouse',
+        type: '',
+        relationship: '',
         age: 0,
         specialNeeds: '',
       ));
@@ -239,7 +291,7 @@ class _SignupScreenState extends State<SignupScreen> {
       phoneNumber: _phoneController.text.trim().isEmpty
           ? null
           : _phoneController.text.trim(),
-      roleInFamily: _selectedRole,
+      roleInFamily: _selectedRole ?? 'Individual',
       familyMembers: _familyMembers,
       dependencies: _dependencies,
       totalFamilyIncome: _calculateTotalIncome(),
@@ -440,7 +492,7 @@ class _SignupScreenState extends State<SignupScreen> {
         DropdownButtonFormField<String>(
           value: _selectedRole,
           decoration: InputDecoration(
-            labelText: 'Your Role in Family',
+            labelText: 'Your Role in Family *',
             prefixIcon: const Icon(Icons.family_restroom),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -448,6 +500,7 @@ class _SignupScreenState extends State<SignupScreen> {
             filled: true,
             fillColor: Colors.grey[50],
           ),
+          hint: const Text('Select your role'),
           items: _familyRoles.map((role) {
             return DropdownMenuItem(
               value: role,
@@ -456,8 +509,14 @@ class _SignupScreenState extends State<SignupScreen> {
           }).toList(),
           onChanged: (value) {
             setState(() {
-              _selectedRole = value!;
+              _selectedRole = value;
             });
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please select your role in family';
+            }
+            return null;
           },
         ),
         const SizedBox(height: 24),
@@ -774,7 +833,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Select the types of budgets you want to focus on',
+          'Select at least one budget type you want to focus on *',
           style: TextStyle(
             fontSize: 16,
             color: Colors.grey,
@@ -954,7 +1013,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 child: ElevatedButton(
                                   onPressed: _currentStep < _steps.length - 1
                                       ? () {
-                                          if (_formKey.currentState!.validate()) {
+                                          if (_validateStep(_currentStep)) {
                                             setState(() {
                                               _currentStep++;
                                             });

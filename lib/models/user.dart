@@ -27,17 +27,17 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      email: json['email'],
-      name: json['name'],
-      phoneNumber: json['phoneNumber'],
-      createdAt: DateTime.parse(json['createdAt']),
-      roleInFamily: json['roleInFamily'] ?? 'Individual',
+      id: json['id'] as String,
+      email: json['email'] as String,
+      name: json['name'] as String,
+      phoneNumber: json['phoneNumber'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      roleInFamily: json['roleInFamily'] as String? ?? 'Individual',
       familyMembers: (json['familyMembers'] as List<dynamic>?)
-          ?.map((member) => FamilyMember.fromJson(member))
+          ?.map((member) => FamilyMember.fromJson(member as Map<String, dynamic>))
           .toList() ?? [],
       dependencies: (json['dependencies'] as List<dynamic>?)
-          ?.map((dep) => Dependency.fromJson(dep))
+          ?.map((dep) => Dependency.fromJson(dep as Map<String, dynamic>))
           .toList() ?? [],
       totalFamilyIncome: (json['totalFamilyIncome'] as num?)?.toDouble() ?? 0.0,
       budgetPreferences: (json['budgetPreferences'] as List<dynamic>?)
@@ -103,10 +103,10 @@ class FamilyMember {
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) {
     return FamilyMember(
-      name: json['name'],
-      relationship: json['relationship'],
+      name: json['name'] as String,
+      relationship: json['relationship'] as String,
       monthlyIncome: (json['monthlyIncome'] as num?)?.toDouble(),
-      occupation: json['occupation'],
+      occupation: json['occupation'] as String?,
     );
   }
 
@@ -137,11 +137,11 @@ class Dependency {
 
   factory Dependency.fromJson(Map<String, dynamic> json) {
     return Dependency(
-      name: json['name'],
-      type: json['type'],
-      relationship: json['relationship'],
-      age: json['age'],
-      specialNeeds: json['specialNeeds'],
+      name: json['name'] as String,
+      type: json['type'] as String,
+      relationship: json['relationship'] as String?,
+      age: json['age'] as int?,
+      specialNeeds: json['specialNeeds'] as String?,
     );
   }
 

@@ -34,19 +34,37 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        if (authProvider.isAuthenticated) {
+        if (authProvider.isAuthenticated && authProvider.currentUser != null) {
+          // Initialize other providers when user is authenticated
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _initializeProviders(authProvider.currentUser!.id);
+          });
           return const DashboardScreen();
         } else {
           return const LoginScreen();
         }
       },
     );
+  }
+
+  void _initializeProviders(String userId) {
+    final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+    final groupProvider = Provider.of<GroupProvider>(context, listen: false);
+    
+    // Initialize providers with user data
+    expenseProvider.initialize(userId);
+    groupProvider.initialize(userId);
   }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../services/auth_service.dart';
+import '../utils/app_constants.dart';
+import '../utils/validation_utils.dart';
 import 'signup_screen.dart';
 import 'dashboard_screen.dart';
 
@@ -139,15 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             filled: true,
                             fillColor: Colors.grey[50],
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!AuthService.isValidEmail(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
+                          validator: ValidationUtils.getEmailError,
                         ),
                         const SizedBox(height: 16),
 
@@ -176,15 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             filled: true,
                             fillColor: Colors.grey[50],
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            if (!AuthService.isValidPassword(value)) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
+                          validator: ValidationUtils.getPasswordError,
                         ),
                         const SizedBox(height: 24),
 

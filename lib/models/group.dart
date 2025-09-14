@@ -21,15 +21,15 @@ class Group {
 
   factory Group.fromJson(Map<String, dynamic> json) {
     return Group(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      members: List<String>.from(json['members']),
-      createdBy: json['createdBy'],
-      createdAt: DateTime.parse(json['createdAt']),
-      totalAmount: json['totalAmount']?.toDouble() ?? 0.0,
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      members: List<String>.from(json['members'] as List),
+      createdBy: json['createdBy'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       expenses: (json['expenses'] as List?)
-          ?.map((e) => GroupExpense.fromJson(e))
+          ?.map((e) => GroupExpense.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],
     );
   }
@@ -91,13 +91,13 @@ class GroupExpense {
 
   factory GroupExpense.fromJson(Map<String, dynamic> json) {
     return GroupExpense(
-      id: json['id'],
-      title: json['title'],
-      amount: json['amount'].toDouble(),
-      paidBy: json['paidBy'],
-      splitBetween: List<String>.from(json['splitBetween']),
-      date: DateTime.parse(json['date']),
-      groupId: json['groupId'],
+      id: json['id'] as String,
+      title: json['title'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      paidBy: json['paidBy'] as String,
+      splitBetween: List<String>.from(json['splitBetween'] as List),
+      date: DateTime.parse(json['date'] as String),
+      groupId: json['groupId'] as String,
     );
   }
 

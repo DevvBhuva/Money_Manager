@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/expense_provider.dart';
+import '../providers/group_provider.dart';
 import 'expenses_screen.dart';
 import 'groups_screen.dart';
 import 'tracker_screen.dart';
@@ -56,167 +58,173 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildWelcomeSection() {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.currentUser;
-    
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome back, ${user?.name ?? 'User'}!',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final user = authProvider.currentUser;
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
             ),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Let\'s manage your finances together',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome back, ${user?.name ?? 'User'}!',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Let\'s manage your finances together',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xCCFFFFFF),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildMonthlyBudgetSection() {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.currentUser;
-    final totalIncome = user?.totalFamilyIncome ?? 0.0;
-    final defaultMonthlyBudget = totalIncome * 0.7; // 70% of total income
-    
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Monthly Budget',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3748),
-                ),
-              ),
-              IconButton(
-                onPressed: () => _showEditBudgetDialog(context, defaultMonthlyBudget),
-                icon: const Icon(Icons.edit, color: Color(0xFF667eea)),
+    return Consumer2<AuthProvider, ExpenseProvider>(
+      builder: (context, authProvider, expenseProvider, child) {
+        final user = authProvider.currentUser;
+        final totalIncome = user?.totalFamilyIncome ?? 0.0;
+        final currentBudget = expenseProvider.monthlyBudget;
+        final defaultMonthlyBudget = currentBudget > 0 ? currentBudget : totalIncome * 0.7; // 70% of total income
+        
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x1A000000),
+                spreadRadius: 1,
+                blurRadius: 4,
+                offset: Offset(0, 2),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          
-          // Budget Progress
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '₹${defaultMonthlyBudget.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Monthly Budget',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3748),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => _showEditBudgetDialog(context, defaultMonthlyBudget),
+                    icon: const Icon(Icons.edit, color: Color(0xFF667eea)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Budget Progress
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '₹${defaultMonthlyBudget.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF667eea),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          '70% of total income',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF718096),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      color: Color(0x1A667eea),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.account_balance_wallet,
                         color: Color(0xFF667eea),
+                        size: 40,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '70% of total income',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Income Information
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF7FAFC),
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.trending_up, color: Color(0xFF667eea)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total Family Income',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF718096),
+                            ),
+                          ),
+                          Text(
+                            '₹${totalIncome.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D3748),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF667eea).withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.account_balance_wallet,
-                    color: Color(0xFF667eea),
-                    size: 40,
-                  ),
-                ),
-              ),
             ],
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Income Information
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.trending_up, color: Color(0xFF667eea)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total Family Income',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        '₹${totalIncome.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2D3748),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -323,62 +331,89 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildRecentExpensesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Consumer<ExpenseProvider>(
+      builder: (context, expenseProvider, child) {
+        final recentExpenses = expenseProvider.getRecentExpenses(7);
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Recent Expenses',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2D3748),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Recent Expenses',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3748),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _navigateToExpensesScreen(),
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      color: Color(0xFF667eea),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-                         TextButton(
-               onPressed: () => _navigateToExpensesScreen(),
-               child: const Text(
-                 'View All',
-                 style: TextStyle(
-                   color: Color(0xFF667eea),
-                   fontWeight: FontWeight.w500,
-                 ),
-               ),
-             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.1),
-                spreadRadius: 1,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildExpenseItem('Groceries', '₹1,200', 'Today'),
-              _buildDivider(),
-              _buildExpenseItem('Transport', '₹500', 'Yesterday'),
-              _buildDivider(),
-              _buildExpenseItem('Dining', '₹800', '2 days ago'),
-            ],
-          ),
-        ),
-      ],
+              child: recentExpenses.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Text(
+                          'No recent expenses',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      children: recentExpenses.take(3).map((expense) {
+                        final isLast = recentExpenses.indexOf(expense) == 2;
+                        return Column(
+                          children: [
+                            _buildExpenseItem(
+                              expense.title,
+                              '₹${expense.amount.toStringAsFixed(2)}',
+                              _formatDate(expense.date),
+                              expense.type == 'income' ? Colors.green : Colors.red,
+                            ),
+                            if (!isLast) _buildDivider(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildExpenseItem(String title, String amount, String date) {
+  Widget _buildExpenseItem(String title, String amount, String date, [Color? color]) {
+    final itemColor = color ?? const Color(0xFF667eea);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -387,12 +422,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF667eea).withValues(alpha: 0.1),
+              color: itemColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.shopping_cart,
-              color: Color(0xFF667eea),
+            child: Icon(
+              color == Colors.green ? Icons.add_circle : Icons.shopping_cart,
+              color: itemColor,
               size: 20,
             ),
           ),
@@ -421,15 +456,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           Text(
             amount,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2D3748),
+              color: itemColor,
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Yesterday';
+    } else if (difference < 7) {
+      return '$difference days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 
   Widget _buildDivider() {
@@ -471,9 +521,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                // Here you would typically save the new budget to your data store
                 final newBudget = double.tryParse(budgetController.text) ?? currentBudget;
-                // TODO: Implement budget saving functionality
+                final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+                expenseProvider.setMonthlyBudget(newBudget);
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -547,6 +597,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               final navigator = Navigator.of(context);
+              final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+              final groupProvider = Provider.of<GroupProvider>(context, listen: false);
+              
+              // Clear provider data
+              await expenseProvider.clearData();
+              await groupProvider.clearData();
+              
               await authProvider.logout();
               if (mounted) {
                 navigator.pushReplacement(

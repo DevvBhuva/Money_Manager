@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import '../utils/app_constants.dart';
+import '../utils/date_utils.dart';
+import '../utils/validation_utils.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final VoidCallback? onAddExpense;
@@ -13,32 +16,20 @@ class ExpensesScreen extends StatefulWidget {
 }
 
 class ExpensesScreenState extends State<ExpensesScreen> {
-  final List<String> _expenseCategories = [
-    'Food & Dining',
-    'Transportation',
-    'Shopping',
-    'Entertainment',
-    'Healthcare',
-    'Education',
-    'Utilities',
-    'Rent',
-    'Insurance',
-    'Other'
-  ];
-
-  final List<String> _incomeCategories = [
-    'Salary',
-    'Freelance',
-    'Investment',
-    'Gift',
-    'Refund',
-    'Other'
-  ];
+  // Use constants from AppConstants
+  List<String> get _expenseCategories => AppConstants.expenseCategories;
+  List<String> get _incomeCategories => AppConstants.incomeCategories;
 
   @override
   void initState() {
     super.initState();
     // No default expenses - start with empty list
+  }
+
+  @override
+  void dispose() {
+    // Clean up any resources if needed
+    super.dispose();
   }
 
   void addExpense() {
@@ -122,7 +113,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
     final titleController = TextEditingController(text: expense?.title ?? '');
     final amountController = TextEditingController(text: expense?.amount.toString() ?? '');
     final descriptionController = TextEditingController(text: expense?.description ?? '');
-    String selectedCategory = expense?.category ?? _expenseCategories[0];
+    String? selectedCategory = expense?.category;
 
     showDialog(
       context: context,
@@ -153,9 +144,10 @@ class ExpensesScreenState extends State<ExpensesScreen> {
               DropdownButtonFormField<String>(
                 value: selectedCategory,
                 decoration: const InputDecoration(
-                  labelText: 'Category',
+                  labelText: 'Category *',
                   border: OutlineInputBorder(),
                 ),
+                hint: const Text('Select category'),
                 items: _expenseCategories.map((category) {
                   return DropdownMenuItem(
                     value: category,
@@ -163,7 +155,13 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                   );
                 }).toList(),
                 onChanged: (value) {
-                  selectedCategory = value!;
+                  selectedCategory = value;
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a category';
+                  }
+                  return null;
                 },
               ),
               const SizedBox(height: 16),
@@ -189,20 +187,22 @@ class ExpensesScreenState extends State<ExpensesScreen> {
               final amountText = amountController.text.trim();
               final description = descriptionController.text.trim();
 
-              if (title.isEmpty || amountText.isEmpty) {
+              if (title.isEmpty || amountText.isEmpty || selectedCategory == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please fill all required fields')),
                 );
                 return;
               }
 
-              final amount = double.tryParse(amountText);
-              if (amount == null || amount <= 0) {
+              final amountError = ValidationUtils.getAmountError(amountText);
+              if (amountError != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a valid amount')),
+                  SnackBar(content: Text(amountError)),
                 );
                 return;
               }
+              
+              final amount = double.parse(amountText);
 
               final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
 
@@ -212,7 +212,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   title: title,
                   amount: amount,
-                  category: selectedCategory,
+                  category: selectedCategory!,
                   description: description,
                   date: DateTime.now(),
                   userId: '1',
@@ -224,7 +224,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                 final updatedExpense = expense.copyWith(
                   title: title,
                   amount: amount,
-                  category: selectedCategory,
+                  category: selectedCategory!,
                   description: description,
                 );
                 expenseProvider.updateExpense(updatedExpense);
@@ -248,7 +248,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
     final titleController = TextEditingController(text: expense?.title ?? '');
     final amountController = TextEditingController(text: expense?.amount.toString() ?? '');
     final descriptionController = TextEditingController(text: expense?.description ?? '');
-    String selectedCategory = expense?.category ?? _incomeCategories[0];
+    String? selectedCategory = expense?.category;
 
     showDialog(
       context: context,
@@ -279,9 +279,10 @@ class ExpensesScreenState extends State<ExpensesScreen> {
               DropdownButtonFormField<String>(
                 value: selectedCategory,
                 decoration: const InputDecoration(
-                  labelText: 'Category',
+                  labelText: 'Category *',
                   border: OutlineInputBorder(),
                 ),
+                hint: const Text('Select category'),
                 items: _incomeCategories.map((category) {
                   return DropdownMenuItem(
                     value: category,
@@ -289,7 +290,13 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                   );
                 }).toList(),
                 onChanged: (value) {
-                  selectedCategory = value!;
+                  selectedCategory = value;
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a category';
+                  }
+                  return null;
                 },
               ),
               const SizedBox(height: 16),
@@ -315,20 +322,22 @@ class ExpensesScreenState extends State<ExpensesScreen> {
               final amountText = amountController.text.trim();
               final description = descriptionController.text.trim();
 
-              if (title.isEmpty || amountText.isEmpty) {
+              if (title.isEmpty || amountText.isEmpty || selectedCategory == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please fill all required fields')),
                 );
                 return;
               }
 
-              final amount = double.tryParse(amountText);
-              if (amount == null || amount <= 0) {
+              final amountError = ValidationUtils.getAmountError(amountText);
+              if (amountError != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a valid amount')),
+                  SnackBar(content: Text(amountError)),
                 );
                 return;
               }
+              
+              final amount = double.parse(amountText);
 
               final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
 
@@ -338,7 +347,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   title: title,
                   amount: amount,
-                  category: selectedCategory,
+                  category: selectedCategory!,
                   description: description,
                   date: DateTime.now(),
                   userId: '1',
@@ -350,7 +359,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                 final updatedIncome = expense.copyWith(
                   title: title,
                   amount: amount,
-                  category: selectedCategory,
+                  category: selectedCategory!,
                   description: description,
                 );
                 expenseProvider.updateExpense(updatedIncome);
@@ -497,91 +506,11 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                     itemCount: expenses.length,
                     itemBuilder: (context, index) {
                       final expense = expenses[index];
-                      final isIncome = expense.type == 'income';
-                      
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: (isIncome ? Colors.green : _getCategoryColor(expense.category)).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              isIncome ? Icons.add_circle : _getCategoryIcon(expense.category),
-                              color: isIncome ? Colors.green : _getCategoryColor(expense.category),
-                            ),
-                          ),
-                          title: Text(
-                            expense.title,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(expense.category),
-                              if (expense.description.isNotEmpty)
-                                Text(
-                                  expense.description,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              Text(
-                                _formatDate(expense.date),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '${isIncome ? '+' : '-'}₹${expense.amount.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isIncome ? Colors.green : Colors.red,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              PopupMenuButton<String>(
-                                icon: const Icon(Icons.more_vert),
-                                onSelected: (value) {
-                                  if (value == 'edit') {
-                                    _editExpense(expense);
-                                  } else if (value == 'delete') {
-                                    _deleteExpense(expense);
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.edit, size: 16),
-                                        SizedBox(width: 8),
-                                        Text('Edit'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.delete, size: 16, color: Colors.red),
-                                        SizedBox(width: 8),
-                                        Text('Delete', style: TextStyle(color: Colors.red)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                      return _ExpenseListItem(
+                        key: ValueKey(expense.id),
+                        expense: expense,
+                        onEdit: () => _editExpense(expense),
+                        onDelete: () => _deleteExpense(expense),
                       );
                     },
                   ),
@@ -592,6 +521,176 @@ class ExpensesScreenState extends State<ExpensesScreen> {
         onPressed: addExpense,
         backgroundColor: const Color(0xFF667eea),
         child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'Food & Dining':
+        return Colors.orange;
+      case 'Transportation':
+        return Colors.blue;
+      case 'Shopping':
+        return Colors.purple;
+      case 'Entertainment':
+        return Colors.pink;
+      case 'Healthcare':
+        return Colors.red;
+      case 'Education':
+        return Colors.green;
+      case 'Utilities':
+        return Colors.teal;
+      case 'Rent':
+        return Colors.indigo;
+      case 'Insurance':
+        return Colors.amber;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Food & Dining':
+        return Icons.restaurant;
+      case 'Transportation':
+        return Icons.directions_car;
+      case 'Shopping':
+        return Icons.shopping_bag;
+      case 'Entertainment':
+        return Icons.movie;
+      case 'Healthcare':
+        return Icons.medical_services;
+      case 'Education':
+        return Icons.school;
+      case 'Utilities':
+        return Icons.power;
+      case 'Rent':
+        return Icons.home;
+      case 'Insurance':
+        return Icons.security;
+      default:
+        return Icons.receipt;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Yesterday';
+    } else if (difference < 7) {
+      return '$difference days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+}
+
+class _ExpenseListItem extends StatelessWidget {
+  final Expense expense;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _ExpenseListItem({
+    super.key,
+    required this.expense,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isIncome = expense.type == 'income';
+    final categoryColor = isIncome ? Colors.green : AppConstants.categoryColors[expense.category] ?? Colors.grey;
+    final categoryIcon = isIncome ? Icons.add_circle : AppConstants.categoryIcons[expense.category] ?? Icons.receipt;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Color.fromRGBO(categoryColor.red, categoryColor.green, categoryColor.blue, 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            categoryIcon,
+            color: categoryColor,
+          ),
+        ),
+        title: Text(
+          expense.title,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(expense.category),
+            if (expense.description.isNotEmpty)
+              Text(
+                expense.description,
+                style: const TextStyle(fontSize: 12),
+              ),
+            Text(
+              AppDateUtils.formatDate(expense.date),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${isIncome ? '+' : '-'}${AppDateUtils.formatCurrency(expense.amount)}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isIncome ? Colors.green : Colors.red,
+                fontSize: 16,
+              ),
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  onEdit();
+                } else if (value == 'delete') {
+                  onDelete();
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 16),
+                      SizedBox(width: 8),
+                      Text('Edit'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, size: 16, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

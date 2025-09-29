@@ -3,11 +3,15 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/expense_provider.dart';
 import '../providers/group_provider.dart';
+import '../models/expense.dart';
+import '../utils/app_constants.dart';
+import '../utils/validation_utils.dart';
 import 'expenses_screen.dart';
 import 'groups_screen.dart';
 import 'tracker_screen.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
+import '../utils/date_utils.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -102,6 +106,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final totalIncome = user?.totalFamilyIncome ?? 0.0;
         final currentBudget = expenseProvider.monthlyBudget;
         final defaultMonthlyBudget = currentBudget > 0 ? currentBudget : totalIncome * 0.7; // 70% of total income
+        final now = DateTime.now();
+        final spentThisMonth = expenseProvider.expenses
+            .where((e) => e.type == 'expense' && e.date.year == now.year && e.date.month == now.month)
+            .fold<double>(0.0, (sum, e) => sum + e.amount);
+        final budgetProgress = defaultMonthlyBudget > 0
+            ? (spentThisMonth / defaultMonthlyBudget).clamp(0.0, 1.0)
+            : 0.0;
+        final isOverBudget = defaultMonthlyBudget > 0 && spentThisMonth > defaultMonthlyBudget;
         
         return Container(
           padding: const EdgeInsets.all(20),
@@ -147,7 +159,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '₹${defaultMonthlyBudget.toStringAsFixed(2)}',
+                          AppDateUtils.formatCurrency(defaultMonthlyBudget),
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -155,11 +167,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          '70% of total income',
-                          style: TextStyle(
+                        Text(
+                          'Spent this month: ${AppDateUtils.formatCurrency(spentThisMonth)} / ${AppDateUtils.formatCurrency(defaultMonthlyBudget)}',
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF718096),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: const BorderRadius.all(Radius.circular(6)),
+                          child: LinearProgressIndicator(
+                            value: budgetProgress,
+                            backgroundColor: const Color(0xFFE2E8F0),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isOverBudget ? Colors.red : const Color(0xFF667eea),
+                            ),
+                            minHeight: 8,
                           ),
                         ),
                       ],
@@ -208,7 +232,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           Text(
-                            '₹${totalIncome.toStringAsFixed(2)}',
+                            AppDateUtils.formatCurrency(totalIncome),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -399,6 +423,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               '₹${expense.amount.toStringAsFixed(2)}',
                               _formatDate(expense.date),
                               expense.type == 'income' ? Colors.green : Colors.red,
+                              expense,
                             ),
                             if (!isLast) _buildDivider(),
                           ],
@@ -412,11 +437,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildExpenseItem(String title, String amount, String date, [Color? color]) {
+  Widget _buildExpenseItem(String title, String amount, String date, [Color? color, Expense? expense]) {
     final itemColor = color ?? const Color(0xFF667eea);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+      child: GestureDetector(
+        onTap: () {
+          if (expense != null) {
+            _showEditExpenseDialog(expense);
+          }
+        },
+        child: Row(
         children: [
           Container(
             width: 40,
@@ -464,6 +495,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -480,6 +512,122 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
+  }
+
+  void _showEditExpenseDialog(Expense expense) {
+    final titleController = TextEditingController(text: expense.title);
+    final amountController = TextEditingController(text: expense.amount.toString());
+    final descriptionController = TextEditingController(text: expense.description);
+    String? selectedCategory = expense.category;
+
+    final isIncome = expense.type == 'income';
+    final categories = isIncome ? AppConstants.incomeCategories : AppConstants.expenseCategories;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isIncome ? 'Edit Income' : 'Edit Expense'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  border: OutlineInputBorder(),
+                  prefixText: '₹',
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: const InputDecoration(
+                  labelText: 'Category *',
+                  border: OutlineInputBorder(),
+                ),
+                hint: const Text('Select category'),
+                items: categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  selectedCategory = value;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Description (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final title = titleController.text.trim();
+              final amountText = amountController.text.trim();
+              final description = descriptionController.text.trim();
+
+              if (title.isEmpty || amountText.isEmpty || selectedCategory == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please fill all required fields')),
+                );
+                return;
+              }
+
+              final amountError = ValidationUtils.getAmountError(amountText);
+              if (amountError != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(amountError)),
+                );
+                return;
+              }
+
+              final amount = double.parse(amountText);
+              final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+              final updated = expense.copyWith(
+                title: title,
+                amount: amount,
+                category: selectedCategory!,
+                description: description,
+              );
+              expenseProvider.updateExpense(updated);
+
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Transaction updated')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF667eea),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDivider() {

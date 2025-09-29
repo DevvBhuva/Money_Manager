@@ -19,31 +19,31 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
-  
+
   // Family details
   String? _selectedRole;
   final List<FamilyMember> _familyMembers = [];
   final List<Dependency> _dependencies = [];
   final List<String> _selectedBudgetPreferences = [];
-  
+
   // Form controllers for family members
   final List<TextEditingController> _familyNameControllers = [];
   final List<TextEditingController> _familyIncomeControllers = [];
   final List<TextEditingController> _familyOccupationControllers = [];
   final List<String> _familyRelationships = [];
-  
+
   // Form controllers for dependencies
   final List<TextEditingController> _dependencyNameControllers = [];
   final List<TextEditingController> _dependencyAgeControllers = [];
   final List<TextEditingController> _dependencySpecialNeedsControllers = [];
   final List<String> _dependencyTypes = [];
   final List<String> _dependencyRelationships = [];
-  
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   int _currentStep = 0;
-  
+
   final List<String> _familyRoles = [
     'Individual',
     'Son',
@@ -56,10 +56,11 @@ class _SignupScreenState extends State<SignupScreen> {
     'Sister',
     'Grandfather',
     'Grandmother',
-    'Other'
+    'Other',
   ];
-  
+
   final List<String> _availableFamilyRelationships = [
+    'Self',
     'Son',
     'Daughter',
     'Husband',
@@ -73,9 +74,9 @@ class _SignupScreenState extends State<SignupScreen> {
     'Uncle',
     'Aunt',
     'Cousin',
-    'Other'
+    'Other',
   ];
-  
+
   final List<String> _availableDependencyTypes = [
     'Housewife',
     'Elder Parent',
@@ -83,14 +84,14 @@ class _SignupScreenState extends State<SignupScreen> {
     'Disabled Family Member',
     'Student',
     'Unemployed',
-    'Other'
+    'Other',
   ];
-  
+
   final List<String> _budgetOptions = [
     'Daily Budget',
     'Monthly Budget',
     'Quarterly Budget',
-    'Individual Budget'
+    'Individual Budget',
   ];
 
   @override
@@ -100,7 +101,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _phoneController.dispose();
-    
+
     // Dispose family member controllers
     for (var controller in _familyNameControllers) {
       controller.dispose();
@@ -111,7 +112,7 @@ class _SignupScreenState extends State<SignupScreen> {
     for (var controller in _familyOccupationControllers) {
       controller.dispose();
     }
-    
+
     // Dispose dependency controllers
     for (var controller in _dependencyNameControllers) {
       controller.dispose();
@@ -122,7 +123,7 @@ class _SignupScreenState extends State<SignupScreen> {
     for (var controller in _dependencySpecialNeedsControllers) {
       controller.dispose();
     }
-    
+
     super.dispose();
   }
 
@@ -183,13 +184,15 @@ class _SignupScreenState extends State<SignupScreen> {
       _familyNameControllers.add(TextEditingController());
       _familyIncomeControllers.add(TextEditingController());
       _familyOccupationControllers.add(TextEditingController());
-      _familyRelationships.add('');
-      _familyMembers.add(FamilyMember(
-        name: '',
-        relationship: '',
-        monthlyIncome: 0,
-        occupation: '',
-      ));
+      _familyRelationships.add('Son');
+      _familyMembers.add(
+        FamilyMember(
+          name: '',
+          relationship: 'Son',
+          monthlyIncome: 0,
+          occupation: '',
+        ),
+      );
     });
   }
 
@@ -211,15 +214,17 @@ class _SignupScreenState extends State<SignupScreen> {
       _dependencyNameControllers.add(TextEditingController());
       _dependencyAgeControllers.add(TextEditingController());
       _dependencySpecialNeedsControllers.add(TextEditingController());
-      _dependencyTypes.add('');
+      _dependencyTypes.add('Housewife');
       _dependencyRelationships.add('');
-      _dependencies.add(Dependency(
-        name: '',
-        type: '',
-        relationship: '',
-        age: 0,
-        specialNeeds: '',
-      ));
+      _dependencies.add(
+        Dependency(
+          name: '',
+          type: 'Housewife',
+          relationship: '',
+          age: 0,
+          specialNeeds: '',
+        ),
+      );
     });
   }
 
@@ -249,25 +254,29 @@ class _SignupScreenState extends State<SignupScreen> {
   void _updateFamilyMembers() {
     _familyMembers.clear();
     for (int i = 0; i < _familyNameControllers.length; i++) {
-      _familyMembers.add(FamilyMember(
-        name: _familyNameControllers[i].text,
-        relationship: _familyRelationships[i],
-        monthlyIncome: double.tryParse(_familyIncomeControllers[i].text),
-        occupation: _familyOccupationControllers[i].text,
-      ));
+      _familyMembers.add(
+        FamilyMember(
+          name: _familyNameControllers[i].text,
+          relationship: _familyRelationships[i],
+          monthlyIncome: double.tryParse(_familyIncomeControllers[i].text),
+          occupation: _familyOccupationControllers[i].text,
+        ),
+      );
     }
   }
 
   void _updateDependencies() {
     _dependencies.clear();
     for (int i = 0; i < _dependencyNameControllers.length; i++) {
-      _dependencies.add(Dependency(
-        name: _dependencyNameControllers[i].text,
-        type: _dependencyTypes[i],
-        relationship: _dependencyRelationships[i],
-        age: int.tryParse(_dependencyAgeControllers[i].text),
-        specialNeeds: _dependencySpecialNeedsControllers[i].text,
-      ));
+      _dependencies.add(
+        Dependency(
+          name: _dependencyNameControllers[i].text,
+          type: _dependencyTypes[i],
+          relationship: _dependencyRelationships[i],
+          age: int.tryParse(_dependencyAgeControllers[i].text),
+          specialNeeds: _dependencySpecialNeedsControllers[i].text,
+        ),
+      );
     }
   }
 
@@ -288,9 +297,10 @@ class _SignupScreenState extends State<SignupScreen> {
       email: _emailController.text.trim(),
       password: _passwordController.text,
       confirmPassword: _confirmPasswordController.text,
-      phoneNumber: _phoneController.text.trim().isEmpty
-          ? null
-          : _phoneController.text.trim(),
+      phoneNumber:
+          _phoneController.text.trim().isEmpty
+              ? null
+              : _phoneController.text.trim(),
       roleInFamily: _selectedRole ?? 'Individual',
       familyMembers: _familyMembers,
       dependencies: _dependencies,
@@ -332,7 +342,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        
+
         // Name Field
         TextFormField(
           controller: _nameController,
@@ -340,9 +350,7 @@ class _SignupScreenState extends State<SignupScreen> {
           decoration: InputDecoration(
             labelText: 'Full Name',
             prefixIcon: const Icon(Icons.person),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -365,9 +373,7 @@ class _SignupScreenState extends State<SignupScreen> {
           decoration: InputDecoration(
             labelText: 'Email',
             prefixIcon: const Icon(Icons.email),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -390,9 +396,7 @@ class _SignupScreenState extends State<SignupScreen> {
           decoration: InputDecoration(
             labelText: 'Phone Number (Optional)',
             prefixIcon: const Icon(Icons.phone),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -408,9 +412,7 @@ class _SignupScreenState extends State<SignupScreen> {
             prefixIcon: const Icon(Icons.lock),
             suffixIcon: IconButton(
               icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility
-                    : Icons.visibility_off,
+                _obscurePassword ? Icons.visibility : Icons.visibility_off,
               ),
               onPressed: () {
                 setState(() {
@@ -418,9 +420,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 });
               },
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -455,9 +455,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 });
               },
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -487,26 +485,22 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        
+
         // Role in Family
         DropdownButtonFormField<String>(
           value: _selectedRole,
           decoration: InputDecoration(
             labelText: 'Your Role in Family *',
             prefixIcon: const Icon(Icons.family_restroom),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
           hint: const Text('Select your role'),
-          items: _familyRoles.map((role) {
-            return DropdownMenuItem(
-              value: role,
-              child: Text(role),
-            );
-          }).toList(),
+          items:
+              _familyRoles.map((role) {
+                return DropdownMenuItem(value: role, child: Text(role));
+              }).toList(),
           onChanged: (value) {
             setState(() {
               _selectedRole = value;
@@ -520,7 +514,7 @@ class _SignupScreenState extends State<SignupScreen> {
           },
         ),
         const SizedBox(height: 24),
-        
+
         // Family Members Section
         const Text(
           'Family Members (Earning Members)',
@@ -531,7 +525,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Add Family Member Button
         ElevatedButton.icon(
           onPressed: _addFamilyMember,
@@ -546,7 +540,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Family Members List
         ...List.generate(_familyMembers.length, (index) {
           return Card(
@@ -572,7 +566,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Name
                   TextFormField(
                     controller: _familyNameControllers[index],
@@ -584,22 +578,23 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Relationship
                   DropdownButtonFormField<String>(
-                    value: _familyRelationships[index],
+                    value:
+                        _familyRelationships[index].isEmpty
+                            ? null
+                            : _familyRelationships[index],
                     decoration: InputDecoration(
                       labelText: 'Relationship',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                                         items: _availableFamilyRelationships.map((rel) {
-                       return DropdownMenuItem(
-                         value: rel,
-                         child: Text(rel),
-                       );
-                     }).toList(),
+                    items:
+                        _availableFamilyRelationships.map((rel) {
+                          return DropdownMenuItem(value: rel, child: Text(rel));
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _familyRelationships[index] = value!;
@@ -607,25 +602,25 @@ class _SignupScreenState extends State<SignupScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  
-                                     // Monthly Income
-                   TextFormField(
-                     controller: _familyIncomeControllers[index],
-                     keyboardType: TextInputType.number,
-                     decoration: InputDecoration(
-                       labelText: 'Monthly Income (₹)',
-                       border: OutlineInputBorder(
-                         borderRadius: BorderRadius.circular(8),
-                       ),
-                     ),
-                     onChanged: (value) {
-                       setState(() {
-                         // Trigger rebuild to update total income display
-                       });
-                     },
-                   ),
+
+                  // Monthly Income
+                  TextFormField(
+                    controller: _familyIncomeControllers[index],
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Monthly Income (₹)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        // Trigger rebuild to update total income display
+                      });
+                    },
+                  ),
                   const SizedBox(height: 12),
-                  
+
                   // Occupation
                   TextFormField(
                     controller: _familyOccupationControllers[index],
@@ -641,7 +636,7 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           );
         }),
-        
+
         // Total Income Display
         if (_familyMembers.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -691,13 +686,10 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 16),
         const Text(
           'Add family members who depend on you financially',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 32),
-        
+
         // Add Dependency Button
         ElevatedButton.icon(
           onPressed: _addDependency,
@@ -712,7 +704,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Dependencies List
         ...List.generate(_dependencies.length, (index) {
           return Card(
@@ -738,7 +730,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Name
                   TextFormField(
                     controller: _dependencyNameControllers[index],
@@ -750,22 +742,26 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Type
                   DropdownButtonFormField<String>(
-                    value: _dependencyTypes[index],
+                    value:
+                        _dependencyTypes[index].isEmpty
+                            ? null
+                            : _dependencyTypes[index],
                     decoration: InputDecoration(
                       labelText: 'Type',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                                         items: _availableDependencyTypes.map((type) {
-                       return DropdownMenuItem(
-                         value: type,
-                         child: Text(type),
-                       );
-                     }).toList(),
+                    items:
+                        _availableDependencyTypes.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _dependencyTypes[index] = value!;
@@ -773,7 +769,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Relationship
                   TextFormField(
                     decoration: InputDecoration(
@@ -787,7 +783,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Age
                   TextFormField(
                     controller: _dependencyAgeControllers[index],
@@ -800,7 +796,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Special Needs
                   TextFormField(
                     controller: _dependencySpecialNeedsControllers[index],
@@ -834,13 +830,10 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 16),
         const Text(
           'Select at least one budget type you want to focus on *',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 32),
-        
+
         // Budget Options
         ..._budgetOptions.map((option) {
           return CheckboxListTile(
@@ -859,27 +852,25 @@ class _SignupScreenState extends State<SignupScreen> {
             contentPadding: EdgeInsets.zero,
           );
         }),
-        
+
         const SizedBox(height: 24),
-        
+
         if (_selectedBudgetPreferences.isNotEmpty) ...[
           const Text(
             'Selected Budget Types:',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
-            children: _selectedBudgetPreferences.map((pref) {
-              return Chip(
-                label: Text(pref),
-                backgroundColor: const Color(0xFF667eea),
-                labelStyle: const TextStyle(color: Colors.white),
-              );
-            }).toList(),
+            children:
+                _selectedBudgetPreferences.map((pref) {
+                  return Chip(
+                    label: Text(pref),
+                    backgroundColor: const Color(0xFF667eea),
+                    labelStyle: const TextStyle(color: Colors.white),
+                  );
+                }).toList(),
           ),
         ],
       ],
@@ -901,10 +892,7 @@ class _SignupScreenState extends State<SignupScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-            ],
+            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
           ),
         ),
         child: SafeArea(
@@ -916,13 +904,14 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: _currentStep > 0
-                          ? () {
-                              setState(() {
-                                _currentStep--;
-                              });
-                            }
-                          : null,
+                      onPressed:
+                          _currentStep > 0
+                              ? () {
+                                setState(() {
+                                  _currentStep--;
+                                });
+                              }
+                              : null,
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                     ),
                     const SizedBox(width: 16),
@@ -941,8 +930,12 @@ class _SignupScreenState extends State<SignupScreen> {
                           const SizedBox(height: 8),
                           LinearProgressIndicator(
                             value: (_currentStep + 1) / _steps.length,
-                            backgroundColor: Colors.white.withValues(alpha: 0.3),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.3,
+                            ),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -958,7 +951,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
               ),
-              
+
               // Form content
               Expanded(
                 child: Container(
@@ -985,9 +978,9 @@ class _SignupScreenState extends State<SignupScreen> {
                               child: _steps[_currentStep],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Navigation buttons
                           Row(
                             children: [
@@ -1000,7 +993,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                       });
                                     },
                                     style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -1011,49 +1006,55 @@ class _SignupScreenState extends State<SignupScreen> {
                               if (_currentStep > 0) const SizedBox(width: 16),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: _currentStep < _steps.length - 1
-                                      ? () {
-                                          if (_validateStep(_currentStep)) {
-                                            setState(() {
-                                              _currentStep++;
-                                            });
+                                  onPressed:
+                                      _currentStep < _steps.length - 1
+                                          ? () {
+                                            if (_validateStep(_currentStep)) {
+                                              setState(() {
+                                                _currentStep++;
+                                              });
+                                            }
                                           }
-                                        }
-                                      : (_isLoading ? null : _signup),
+                                          : (_isLoading ? null : _signup),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF667eea),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
+                                  child:
+                                      _isLoading
+                                          ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.white,
+                                                  ),
+                                            ),
+                                          )
+                                          : Text(
+                                            _currentStep < _steps.length - 1
+                                                ? 'Next'
+                                                : 'Create Account',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        )
-                                      : Text(
-                                          _currentStep < _steps.length - 1
-                                              ? 'Next'
-                                              : 'Create Account',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
                                 ),
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Login link
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1088,4 +1089,4 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-} 
+}

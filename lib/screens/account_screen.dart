@@ -52,19 +52,13 @@ class AccountScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   user?.email ?? '',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.white70),
                 ),
                 if (user?.phoneNumber != null) ...[
                   const SizedBox(height: 4),
                   Text(
                     user!.phoneNumber!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                 ],
               ],
@@ -162,11 +156,7 @@ class AccountScreen extends StatelessWidget {
           color: const Color(0xFF667eea).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFF667eea),
-          size: 20,
-        ),
+        child: Icon(icon, color: const Color(0xFF667eea), size: 20),
       ),
       title: Text(title),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -222,11 +212,9 @@ class AccountScreen extends StatelessWidget {
   }
 
   void _navigateToEditProfile(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const EditProfileScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const EditProfileScreen()));
   }
 
   void _showSnackBar(BuildContext context, String message) {
@@ -251,29 +239,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
-  
+
   // Family details
   late String _selectedRole;
   final List<FamilyMember> _familyMembers = [];
   final List<Dependency> _dependencies = [];
   final List<String> _selectedBudgetPreferences = [];
-  
+
   // Form controllers for family members
   final List<TextEditingController> _familyNameControllers = [];
   final List<TextEditingController> _familyIncomeControllers = [];
   final List<TextEditingController> _familyOccupationControllers = [];
   final List<String> _familyRelationships = [];
-  
+
   // Form controllers for dependencies
   final List<TextEditingController> _dependencyNameControllers = [];
   final List<TextEditingController> _dependencyAgeControllers = [];
   final List<TextEditingController> _dependencySpecialNeedsControllers = [];
   final List<String> _dependencyTypes = [];
   final List<String> _dependencyRelationships = [];
-  
+
   bool _isLoading = false;
   int _currentStep = 0;
-  
+
   final List<String> _familyRoles = [
     'Individual',
     'Son',
@@ -286,9 +274,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Sister',
     'Grandfather',
     'Grandmother',
-    'Other'
+    'Other',
   ];
-  
+
   final List<String> _availableFamilyRelationships = [
     'Son',
     'Daughter',
@@ -303,9 +291,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Uncle',
     'Aunt',
     'Cousin',
-    'Other'
+    'Other',
   ];
-  
+
   final List<String> _availableDependencyTypes = [
     'Housewife',
     'Elder Parent',
@@ -313,14 +301,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Disabled Family Member',
     'Student',
     'Unemployed',
-    'Other'
+    'Other',
   ];
-  
+
   final List<String> _budgetOptions = [
     'Daily Budget',
     'Monthly Budget',
     'Quarterly Budget',
-    'Individual Budget'
+    'Individual Budget',
   ];
 
   @override
@@ -342,19 +330,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _loadUserData() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.currentUser;
-    
+
     if (user != null) {
       // Update existing controllers
       _nameController.text = user.name;
       _emailController.text = user.email;
       _phoneController.text = user.phoneNumber ?? '';
       _selectedRole = user.roleInFamily;
-      
+
       // Clear existing data
       _familyMembers.clear();
       _dependencies.clear();
       _selectedBudgetPreferences.clear();
-      
+
       // Dispose existing controllers
       for (var controller in _familyNameControllers) {
         controller.dispose();
@@ -374,7 +362,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       for (var controller in _dependencySpecialNeedsControllers) {
         controller.dispose();
       }
-      
+
       _familyNameControllers.clear();
       _familyIncomeControllers.clear();
       _familyOccupationControllers.clear();
@@ -384,25 +372,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _dependencySpecialNeedsControllers.clear();
       _dependencyTypes.clear();
       _dependencyRelationships.clear();
-      
+
       // Add user data
       _familyMembers.addAll(user.familyMembers);
       _dependencies.addAll(user.dependencies);
       _selectedBudgetPreferences.addAll(user.budgetPreferences);
-      
+
       // Initialize controllers for existing family members
       for (var member in user.familyMembers) {
         _familyNameControllers.add(TextEditingController(text: member.name));
-        _familyIncomeControllers.add(TextEditingController(text: member.monthlyIncome?.toString() ?? ''));
-        _familyOccupationControllers.add(TextEditingController(text: member.occupation ?? ''));
+        _familyIncomeControllers.add(
+          TextEditingController(text: member.monthlyIncome?.toString() ?? ''),
+        );
+        _familyOccupationControllers.add(
+          TextEditingController(text: member.occupation ?? ''),
+        );
         _familyRelationships.add(member.relationship);
       }
-      
+
       // Initialize controllers for existing dependencies
       for (var dependency in user.dependencies) {
-        _dependencyNameControllers.add(TextEditingController(text: dependency.name));
-        _dependencyAgeControllers.add(TextEditingController(text: dependency.age?.toString() ?? ''));
-        _dependencySpecialNeedsControllers.add(TextEditingController(text: dependency.specialNeeds ?? ''));
+        _dependencyNameControllers.add(
+          TextEditingController(text: dependency.name),
+        );
+        _dependencyAgeControllers.add(
+          TextEditingController(text: dependency.age?.toString() ?? ''),
+        );
+        _dependencySpecialNeedsControllers.add(
+          TextEditingController(text: dependency.specialNeeds ?? ''),
+        );
         _dependencyTypes.add(dependency.type);
         _dependencyRelationships.add(dependency.relationship ?? '');
       }
@@ -414,7 +412,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    
+
     // Dispose family member controllers
     for (var controller in _familyNameControllers) {
       controller.dispose();
@@ -425,7 +423,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     for (var controller in _familyOccupationControllers) {
       controller.dispose();
     }
-    
+
     // Dispose dependency controllers
     for (var controller in _dependencyNameControllers) {
       controller.dispose();
@@ -436,7 +434,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     for (var controller in _dependencySpecialNeedsControllers) {
       controller.dispose();
     }
-    
+
     super.dispose();
   }
 
@@ -446,12 +444,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _familyIncomeControllers.add(TextEditingController());
       _familyOccupationControllers.add(TextEditingController());
       _familyRelationships.add('Son');
-      _familyMembers.add(FamilyMember(
-        name: '',
-        relationship: 'Son',
-        monthlyIncome: 0,
-        occupation: '',
-      ));
+      _familyMembers.add(
+        FamilyMember(
+          name: '',
+          relationship: 'Son',
+          monthlyIncome: 0,
+          occupation: '',
+        ),
+      );
     });
   }
 
@@ -475,13 +475,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _dependencySpecialNeedsControllers.add(TextEditingController());
       _dependencyTypes.add('Housewife');
       _dependencyRelationships.add('Spouse');
-      _dependencies.add(Dependency(
-        name: '',
-        type: 'Housewife',
-        relationship: 'Spouse',
-        age: 0,
-        specialNeeds: '',
-      ));
+      _dependencies.add(
+        Dependency(
+          name: '',
+          type: 'Housewife',
+          relationship: 'Spouse',
+          age: 0,
+          specialNeeds: '',
+        ),
+      );
     });
   }
 
@@ -511,25 +513,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _updateFamilyMembers() {
     _familyMembers.clear();
     for (int i = 0; i < _familyNameControllers.length; i++) {
-      _familyMembers.add(FamilyMember(
-        name: _familyNameControllers[i].text,
-        relationship: _familyRelationships[i],
-        monthlyIncome: double.tryParse(_familyIncomeControllers[i].text),
-        occupation: _familyOccupationControllers[i].text,
-      ));
+      _familyMembers.add(
+        FamilyMember(
+          name: _familyNameControllers[i].text,
+          relationship: _familyRelationships[i],
+          monthlyIncome: double.tryParse(_familyIncomeControllers[i].text),
+          occupation: _familyOccupationControllers[i].text,
+        ),
+      );
     }
   }
 
   void _updateDependencies() {
     _dependencies.clear();
     for (int i = 0; i < _dependencyNameControllers.length; i++) {
-      _dependencies.add(Dependency(
-        name: _dependencyNameControllers[i].text,
-        type: _dependencyTypes[i],
-        relationship: _dependencyRelationships[i],
-        age: int.tryParse(_dependencyAgeControllers[i].text),
-        specialNeeds: _dependencySpecialNeedsControllers[i].text,
-      ));
+      _dependencies.add(
+        Dependency(
+          name: _dependencyNameControllers[i].text,
+          type: _dependencyTypes[i],
+          relationship: _dependencyRelationships[i],
+          age: int.tryParse(_dependencyAgeControllers[i].text),
+          specialNeeds: _dependencySpecialNeedsControllers[i].text,
+        ),
+      );
     }
   }
 
@@ -575,7 +581,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        
+
         // Name Field
         TextFormField(
           controller: _nameController,
@@ -583,9 +589,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           decoration: InputDecoration(
             labelText: 'Full Name',
             prefixIcon: const Icon(Icons.person),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -608,9 +612,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           decoration: InputDecoration(
             labelText: 'Email',
             prefixIcon: const Icon(Icons.email),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -633,9 +635,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           decoration: InputDecoration(
             labelText: 'Phone Number (Optional)',
             prefixIcon: const Icon(Icons.phone),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
@@ -656,25 +656,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        
+
         // Role in Family
         DropdownButtonFormField<String>(
           value: _selectedRole,
           decoration: InputDecoration(
             labelText: 'Your Role in Family',
             prefixIcon: const Icon(Icons.family_restroom),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey[50],
           ),
-          items: _familyRoles.map((role) {
-            return DropdownMenuItem(
-              value: role,
-              child: Text(role),
-            );
-          }).toList(),
+          items:
+              _familyRoles.map((role) {
+                return DropdownMenuItem(value: role, child: Text(role));
+              }).toList(),
           onChanged: (value) {
             setState(() {
               _selectedRole = value!;
@@ -682,7 +678,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           },
         ),
         const SizedBox(height: 24),
-        
+
         // Family Members Section
         const Text(
           'Family Members (Earning Members)',
@@ -693,7 +689,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Add Family Member Button
         ElevatedButton.icon(
           onPressed: _addFamilyMember,
@@ -708,7 +704,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Family Members List
         ...List.generate(_familyMembers.length, (index) {
           return Card(
@@ -734,7 +730,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Name
                   TextFormField(
                     controller: _familyNameControllers[index],
@@ -746,7 +742,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Relationship
                   DropdownButtonFormField<String>(
                     value: _familyRelationships[index],
@@ -756,12 +752,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    items: _availableFamilyRelationships.map((rel) {
-                      return DropdownMenuItem(
-                        value: rel,
-                        child: Text(rel),
-                      );
-                    }).toList(),
+                    items:
+                        _availableFamilyRelationships.map((rel) {
+                          return DropdownMenuItem(value: rel, child: Text(rel));
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _familyRelationships[index] = value!;
@@ -769,7 +763,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Monthly Income
                   TextFormField(
                     controller: _familyIncomeControllers[index],
@@ -787,7 +781,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Occupation
                   TextFormField(
                     controller: _familyOccupationControllers[index],
@@ -803,7 +797,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           );
         }),
-        
+
         // Total Income Display
         if (_familyMembers.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -853,13 +847,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 16),
         const Text(
           'Add family members who depend on you financially',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 32),
-        
+
         // Add Dependency Button
         ElevatedButton.icon(
           onPressed: _addDependency,
@@ -874,7 +865,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Dependencies List
         ...List.generate(_dependencies.length, (index) {
           return Card(
@@ -900,7 +891,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Name
                   TextFormField(
                     controller: _dependencyNameControllers[index],
@@ -912,7 +903,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Type
                   DropdownButtonFormField<String>(
                     value: _dependencyTypes[index],
@@ -922,12 +913,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    items: _availableDependencyTypes.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(type),
-                      );
-                    }).toList(),
+                    items:
+                        _availableDependencyTypes.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _dependencyTypes[index] = value!;
@@ -935,7 +927,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Relationship
                   TextFormField(
                     decoration: InputDecoration(
@@ -949,7 +941,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Age
                   TextFormField(
                     controller: _dependencyAgeControllers[index],
@@ -962,7 +954,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Special Needs
                   TextFormField(
                     controller: _dependencySpecialNeedsControllers[index],
@@ -996,13 +988,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 16),
         const Text(
           'Select the types of budgets you want to focus on',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 32),
-        
+
         // Budget Options
         ..._budgetOptions.map((option) {
           return CheckboxListTile(
@@ -1021,27 +1010,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             contentPadding: EdgeInsets.zero,
           );
         }),
-        
+
         const SizedBox(height: 24),
-        
+
         if (_selectedBudgetPreferences.isNotEmpty) ...[
           const Text(
             'Selected Budget Types:',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
-            children: _selectedBudgetPreferences.map((pref) {
-              return Chip(
-                label: Text(pref),
-                backgroundColor: const Color(0xFF667eea),
-                labelStyle: const TextStyle(color: Colors.white),
-              );
-            }).toList(),
+            children:
+                _selectedBudgetPreferences.map((pref) {
+                  return Chip(
+                    label: Text(pref),
+                    backgroundColor: const Color(0xFF667eea),
+                    labelStyle: const TextStyle(color: Colors.white),
+                  );
+                }).toList(),
           ),
         ],
       ],
@@ -1058,27 +1045,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: AppConstants.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppConstants.primaryColor,
-              AppConstants.secondaryColor,
-            ],
+            colors: [AppConstants.primaryColor, AppConstants.secondaryColor],
           ),
         ),
         child: SafeArea(
@@ -1090,13 +1062,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: _currentStep > 0
-                          ? () {
-                              setState(() {
-                                _currentStep--;
-                              });
-                            }
-                          : null,
+                      onPressed:
+                          _currentStep > 0
+                              ? () {
+                                setState(() {
+                                  _currentStep--;
+                                });
+                              }
+                              : null,
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                     ),
                     const SizedBox(width: 16),
@@ -1107,8 +1080,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           const SizedBox(height: 8),
                           LinearProgressIndicator(
                             value: (_currentStep + 1) / _steps.length,
-                            backgroundColor: Colors.white.withValues(alpha: 0.3),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.3,
+                            ),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -1124,7 +1101,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ],
                 ),
               ),
-              
+
               // Form content
               Expanded(
                 child: Container(
@@ -1151,9 +1128,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               child: _steps[_currentStep],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Navigation buttons
                           Row(
                             children: [
@@ -1166,7 +1143,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       });
                                     },
                                     style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -1177,42 +1156,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               if (_currentStep > 0) const SizedBox(width: 16),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: _currentStep < _steps.length - 1
-                                      ? () {
-                                          if (_formKey.currentState!.validate()) {
-                                            setState(() {
-                                              _currentStep++;
-                                            });
+                                  onPressed:
+                                      _currentStep < _steps.length - 1
+                                          ? () {
+                                            if (_formKey.currentState!
+                                                .validate()) {
+                                              setState(() {
+                                                _currentStep++;
+                                              });
+                                            }
                                           }
-                                        }
-                                      : (_isLoading ? null : _saveProfile),
+                                          : (_isLoading ? null : _saveProfile),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF667eea),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
+                                  child:
+                                      _isLoading
+                                          ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.white,
+                                                  ),
+                                            ),
+                                          )
+                                          : Text(
+                                            _currentStep < _steps.length - 1
+                                                ? 'Next'
+                                                : 'Save Profile',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        )
-                                      : Text(
-                                          _currentStep < _steps.length - 1
-                                              ? 'Next'
-                                              : 'Save Profile',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
                                 ),
                               ),
                             ],
@@ -1229,4 +1215,4 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
   }
-} 
+}

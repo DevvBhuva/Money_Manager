@@ -6,12 +6,18 @@ A comprehensive Flutter application for personal finance management with secure 
 
 ### 🔐 Authentication System
 - **Secure Login**: Email and password authentication with proper validation
-- **User Registration**: Complete signup process with form validation
+- **User Registration**: Multi‑step signup with family details, dependencies and budget preferences
 - **Session Management**: Persistent login state using secure storage
+- **Local User Database**: Users are now persisted using SharedPreferences so accounts survive app restarts
+- **Profile Editing**: Full profile update (name, email, phone, role, family members, dependencies, total income, budget preferences)
 - **Demo Account**: Pre-configured demo account for testing
 
 ### 💰 Financial Dashboard
 - **Balance Overview**: Real-time display of total balance, income, expenses, and savings
+- **Budget Awareness**: Honors user budget preference (Daily / Monthly / Quarterly / Individual)
+  - Daily = monthly budget ÷ 30
+  - Quarterly = monthly budget × 3
+  - Yearly = monthly budget × 12 (via Individual preference or future setting)
 - **Quick Actions**: Easy access to add income, expenses, view reports, and settings
 - **Recent Transactions**: List of recent financial activities with detailed information
 - **Modern UI**: Beautiful gradient design with card-based layout
@@ -27,6 +33,7 @@ A comprehensive Flutter application for personal finance management with secure 
 - **Loading States**: Proper loading indicators during authentication
 - **Error Handling**: User-friendly error messages and validation feedback
 - **Navigation**: Intuitive bottom navigation with multiple sections
+- **Settings → Edit Profile**: Rich profile header and settings list; edit profile supports roles, family members, dependencies and budget preferences
 
 ## Demo Account
 
@@ -66,22 +73,30 @@ For testing purposes, you can use the following demo account:
 lib/
 ├── main.dart                 # App entry point and theme configuration
 ├── models/
-│   └── user.dart            # User data model
+│   ├── user.dart             # User + FamilyMember + Dependency models
+│   └── expense.dart          # Expense model
 ├── providers/
-│   └── auth_provider.dart   # Authentication state management
+│   ├── auth_provider.dart    # Authentication state
+│   ├── expense_provider.dart # Expenses + monthly budget + persistence
+│   └── group_provider.dart   # Groups management (user‑scoped)
 ├── screens/
-│   ├── login_screen.dart    # Login screen with validation
-│   ├── signup_screen.dart   # Registration screen
-│   └── dashboard_screen.dart # Main dashboard with financial overview
+│   ├── login_screen.dart     # Login with validation
+│   ├── signup_screen.dart    # Multi‑step registration
+│   ├── dashboard_screen.dart # Main dashboard with budget section
+│   ├── expenses_screen.dart  # Add/edit expenses and incomes
+│   ├── groups_screen.dart    # Groups feature
+│   ├── settings_screen.dart  # Settings and navigation to edit profile
+│   └── account_screen.dart   # EditProfileScreen implementation
 └── services/
-    └── auth_service.dart    # Authentication logic and user management
+    ├── auth_service.dart     # Auth + persisted local users DB + profile update
+    └── storage_service.dart  # Per‑user expenses, groups and budget storage
 ```
 
 ## Dependencies
 
-- **provider**: State management for authentication
-- **shared_preferences**: Local data storage
-- **flutter_secure_storage**: Secure storage for sensitive data
+- **provider**: State management
+- **shared_preferences**: Local data storage (including persisted users DB)
+- **flutter_secure_storage**: Secure session/token + current user
 - **http**: For future API integration
 - **form_validator**: Form validation utilities
 
@@ -105,19 +120,34 @@ lib/
 ### Dashboard Screen
 - User profile display with avatar
 - Financial overview cards (Balance, Income, Expenses, Savings)
+- Budget section respects selected user preference (Daily/Monthly/Quarterly/Individual)
 - Quick action buttons for common tasks
 - Recent transactions list
 - Bottom navigation for different sections
 - Logout functionality
 
+### Edit Profile
+- Update name, email, phone number, role in family
+- Manage family members (name, relationship, monthly income, occupation)
+- Manage dependencies (name, type, relationship, age, special needs)
+- Select budget preferences (Daily / Monthly / Quarterly / Individual)
+- All changes are persisted and reflected across the app
+
+### Reports (Tracker Screen)
+- App bar titled "Reports"
+- Pie chart at the top showing category distribution of all expenses (always aggregated, unaffected by filters)
+- Category filter dropdown to drill into a specific category
+- Category breakdown list (respecting the filter)
+- When a category is selected, a detailed list of expenses for that category is shown
+
 ## Future Enhancements
 
-- [ ] Real database integration (Firebase/Supabase)
-- [ ] Transaction management (add/edit/delete)
-- [ ] Budget planning and tracking
-- [ ] Financial reports and analytics
+- [ ] Real backend integration (Firebase/Supabase)
+- [ ] Advanced transaction management (bulk edit, recurring)
+- [ ] Shared/group budgets and settlements
+- [ ] Advanced analytics and forecasting
 - [ ] Multiple currency support
-- [ ] Export functionality
+- [ ] Export/Import data
 - [ ] Push notifications
 - [ ] Dark mode support
 

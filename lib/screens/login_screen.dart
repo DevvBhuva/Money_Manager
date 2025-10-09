@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../utils/app_constants.dart';
 import '../utils/validation_utils.dart';
 import 'signup_screen.dart';
 import 'dashboard_screen.dart';

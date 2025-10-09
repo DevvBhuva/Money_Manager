@@ -264,6 +264,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   final List<String> _familyRoles = [
     'Individual',
+    'Self',
     'Son',
     'Daughter',
     'Husband',
@@ -278,6 +279,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   ];
 
   final List<String> _availableFamilyRelationships = [
+    'Self',
     'Son',
     'Daughter',
     'Husband',
@@ -336,7 +338,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _nameController.text = user.name;
       _emailController.text = user.email;
       _phoneController.text = user.phoneNumber ?? '';
-      _selectedRole = user.roleInFamily;
+      // Ensure the role exists in the available options, otherwise use default
+      _selectedRole = _familyRoles.contains(user.roleInFamily) ? user.roleInFamily : 'Individual';
 
       // Clear existing data
       _familyMembers.clear();
@@ -387,7 +390,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _familyOccupationControllers.add(
           TextEditingController(text: member.occupation ?? ''),
         );
-        _familyRelationships.add(member.relationship);
+        // Ensure the relationship exists in the available options, otherwise use default
+        _familyRelationships.add(_availableFamilyRelationships.contains(member.relationship) 
+            ? member.relationship 
+            : 'Son');
       }
 
       // Initialize controllers for existing dependencies
@@ -401,7 +407,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _dependencySpecialNeedsControllers.add(
           TextEditingController(text: dependency.specialNeeds ?? ''),
         );
-        _dependencyTypes.add(dependency.type);
+        // Ensure the type exists in the available options, otherwise use default
+        _dependencyTypes.add(_availableDependencyTypes.contains(dependency.type) 
+            ? dependency.type 
+            : 'Housewife');
         _dependencyRelationships.add(dependency.relationship ?? '');
       }
     }
@@ -550,22 +559,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _isLoading = true;
     });
 
-    // TODO: Implement profile update functionality
-    // For now, just show a success message
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
+      // Calculate total family income
+      double totalFamilyIncome = 0.0;
+      for (var member in _familyMembers) {
+        totalFamilyIncome += member.monthlyIncome ?? 0.0;
+      }
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully!'),
-          backgroundColor: Colors.green,
-        ),
+      final result = await authProvider.updateUser(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        roleInFamily: _selectedRole,
+        familyMembers: _familyMembers,
+        dependencies: _dependencies,
+        totalFamilyIncome: totalFamilyIncome,
+        budgetPreferences: _selectedBudgetPreferences,
       );
-      Navigator.of(context).pop();
+
+      if (result['success']) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.of(context).pop();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -659,7 +707,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         // Role in Family
         DropdownButtonFormField<String>(
-          value: _selectedRole,
+          value: _familyRoles.contains(_selectedRole) ? _selectedRole : 'Individual',
           decoration: InputDecoration(
             labelText: 'Your Role in Family',
             prefixIcon: const Icon(Icons.family_restroom),
@@ -745,7 +793,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   // Relationship
                   DropdownButtonFormField<String>(
-                    value: _familyRelationships[index],
+                    value: _availableFamilyRelationships.contains(_familyRelationships[index]) 
+                        ? _familyRelationships[index] 
+                        : 'Son',
                     decoration: InputDecoration(
                       labelText: 'Relationship',
                       border: OutlineInputBorder(
@@ -906,7 +956,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   // Type
                   DropdownButtonFormField<String>(
-                    value: _dependencyTypes[index],
+                    value: _availableDependencyTypes.contains(_dependencyTypes[index]) 
+                        ? _dependencyTypes[index] 
+                        : 'Housewife',
                     decoration: InputDecoration(
                       labelText: 'Type',
                       border: OutlineInputBorder(

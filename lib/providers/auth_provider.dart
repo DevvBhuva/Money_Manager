@@ -111,6 +111,60 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>> updateUser({
+    required String name,
+    required String email,
+    String? phoneNumber,
+    required String roleInFamily,
+    required List<FamilyMember> familyMembers,
+    required List<Dependency> dependencies,
+    required double totalFamilyIncome,
+    required List<String> budgetPreferences,
+  }) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      if (_currentUser == null) {
+        _setError('No user logged in');
+        return {
+          'success': false,
+          'message': 'No user logged in',
+        };
+      }
+
+      final result = await AuthService.updateUser(
+        userId: _currentUser!.id,
+        name: name,
+        email: email,
+        phoneNumber: phoneNumber,
+        roleInFamily: roleInFamily,
+        familyMembers: familyMembers,
+        dependencies: dependencies,
+        totalFamilyIncome: totalFamilyIncome,
+        budgetPreferences: budgetPreferences,
+      );
+
+      if (result['success']) {
+        _currentUser = result['user'];
+        _isAuthenticated = true;
+      } else {
+        _setError(result['message'] ?? 'Profile update failed');
+      }
+
+      return result;
+    } catch (e) {
+      final errorMsg = 'Profile update failed: ${e.toString()}';
+      _setError(errorMsg);
+      return {
+        'success': false,
+        'message': errorMsg,
+      };
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> logout() async {
     _setLoading(true);
     _clearError();

@@ -153,8 +153,9 @@ class StorageService {
       int budgetKeys = 0;
       
       for (final key in keys) {
-        if (key.startsWith(_userExpensesPrefix)) expenseKeys++;
-        else if (key.startsWith(_userGroupsPrefix)) groupKeys++;
+        if (key.startsWith(_userExpensesPrefix)) {
+          expenseKeys++;
+        } else if (key.startsWith(_userGroupsPrefix)) groupKeys++;
         else if (key.startsWith(_userBudgetPrefix)) budgetKeys++;
       }
       

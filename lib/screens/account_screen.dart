@@ -240,6 +240,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
 
+  // Tracking preference
+  String? _selectedTrackingPreference;
+
+  // Individual income for individual tracking
+  double _individualIncome = 0.0;
+  final TextEditingController _individualIncomeController =
+      TextEditingController();
+
   // Family details
   late String _selectedRole;
   final List<FamilyMember> _familyMembers = [];
@@ -339,7 +347,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _emailController.text = user.email;
       _phoneController.text = user.phoneNumber ?? '';
       // Ensure the role exists in the available options, otherwise use default
-      _selectedRole = _familyRoles.contains(user.roleInFamily) ? user.roleInFamily : 'Individual';
+      _selectedRole =
+          _familyRoles.contains(user.roleInFamily)
+              ? user.roleInFamily
+              : 'Individual';
+
+      // Determine tracking preference based on existing data
+      if (user.familyMembers.isEmpty && user.dependencies.isEmpty) {
+        _selectedTrackingPreference = 'Individual';
+        _individualIncome = user.totalFamilyIncome;
+        _individualIncomeController.text = user.totalFamilyIncome.toString();
+      } else if (user.dependencies.isEmpty && user.familyMembers.length <= 1) {
+        _selectedTrackingPreference = 'Couple';
+      } else {
+        _selectedTrackingPreference = 'Family';
+      }
 
       // Clear existing data
       _familyMembers.clear();
@@ -391,9 +413,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextEditingController(text: member.occupation ?? ''),
         );
         // Ensure the relationship exists in the available options, otherwise use default
-        _familyRelationships.add(_availableFamilyRelationships.contains(member.relationship) 
-            ? member.relationship 
-            : 'Son');
+        _familyRelationships.add(
+          _availableFamilyRelationships.contains(member.relationship)
+              ? member.relationship
+              : 'Son',
+        );
       }
 
       // Initialize controllers for existing dependencies
@@ -408,9 +432,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextEditingController(text: dependency.specialNeeds ?? ''),
         );
         // Ensure the type exists in the available options, otherwise use default
-        _dependencyTypes.add(_availableDependencyTypes.contains(dependency.type) 
-            ? dependency.type 
-            : 'Housewife');
+        _dependencyTypes.add(
+          _availableDependencyTypes.contains(dependency.type)
+              ? dependency.type
+              : 'Housewife',
+        );
         _dependencyRelationships.add(dependency.relationship ?? '');
       }
     }
@@ -421,6 +447,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _individualIncomeController.dispose();
 
     // Dispose family member controllers
     for (var controller in _familyNameControllers) {
@@ -561,17 +588,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
-      // Calculate total family income
+
+      // Calculate total income based on tracking preference
       double totalFamilyIncome = 0.0;
-      for (var member in _familyMembers) {
-        totalFamilyIncome += member.monthlyIncome ?? 0.0;
+      if (_selectedTrackingPreference == 'Individual') {
+        totalFamilyIncome = _individualIncome;
+      } else {
+        for (var member in _familyMembers) {
+          totalFamilyIncome += member.monthlyIncome ?? 0.0;
+        }
       }
 
       final result = await authProvider.updateUser(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
-        phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        phoneNumber:
+            _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
         roleInFamily: _selectedRole,
         familyMembers: _familyMembers,
         dependencies: _dependencies,
@@ -615,6 +649,243 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     }
+  }
+
+  Widget _buildTrackingPreferenceStep() {
+    return Column(
+      children: [
+        const Text(
+          'How do you want to track expenses?',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2D3748),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Choose the option that best describes your situation',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+        const SizedBox(height: 32),
+
+        // Individual Option
+        Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                _selectedTrackingPreference = 'Individual';
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      _selectedTrackingPreference == 'Individual'
+                          ? const Color(0xFF667eea)
+                          : Colors.grey.shade300,
+                  width: 2,
+                ),
+                color:
+                    _selectedTrackingPreference == 'Individual'
+                        ? const Color(0xFF667eea).withValues(alpha: 0.1)
+                        : Colors.white,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.person,
+                    size: 40,
+                    color:
+                        _selectedTrackingPreference == 'Individual'
+                            ? const Color(0xFF667eea)
+                            : Colors.grey,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Individual',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Track your personal expenses only',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Radio<String>(
+                    value: 'Individual',
+                    groupValue: _selectedTrackingPreference,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedTrackingPreference = value;
+                      });
+                    },
+                    activeColor: const Color(0xFF667eea),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Couple Option
+        Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                _selectedTrackingPreference = 'Couple';
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      _selectedTrackingPreference == 'Couple'
+                          ? const Color(0xFF667eea)
+                          : Colors.grey.shade300,
+                  width: 2,
+                ),
+                color:
+                    _selectedTrackingPreference == 'Couple'
+                        ? const Color(0xFF667eea).withValues(alpha: 0.1)
+                        : Colors.white,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.favorite,
+                    size: 40,
+                    color:
+                        _selectedTrackingPreference == 'Couple'
+                            ? const Color(0xFF667eea)
+                            : Colors.grey,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Couple',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Track expenses for you and your partner',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Radio<String>(
+                    value: 'Couple',
+                    groupValue: _selectedTrackingPreference,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedTrackingPreference = value;
+                      });
+                    },
+                    activeColor: const Color(0xFF667eea),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Family Option
+        Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                _selectedTrackingPreference = 'Family';
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      _selectedTrackingPreference == 'Family'
+                          ? const Color(0xFF667eea)
+                          : Colors.grey.shade300,
+                  width: 2,
+                ),
+                color:
+                    _selectedTrackingPreference == 'Family'
+                        ? const Color(0xFF667eea).withValues(alpha: 0.1)
+                        : Colors.white,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.family_restroom,
+                    size: 40,
+                    color:
+                        _selectedTrackingPreference == 'Family'
+                            ? const Color(0xFF667eea)
+                            : Colors.grey,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Family',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Track expenses for your entire family including dependents',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Radio<String>(
+                    value: 'Family',
+                    groupValue: _selectedTrackingPreference,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedTrackingPreference = value;
+                      });
+                    },
+                    activeColor: const Color(0xFF667eea),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildBasicInfoStep() {
@@ -693,6 +964,210 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildFamilyDetailsStep() {
+    // Show different content based on tracking preference
+    if (_selectedTrackingPreference == 'Individual') {
+      return _buildIndividualDetailsStep();
+    } else if (_selectedTrackingPreference == 'Couple') {
+      return _buildCoupleDetailsStep();
+    } else {
+      return _buildFamilyDetailsStepFull();
+    }
+  }
+
+  Widget _buildIndividualDetailsStep() {
+    return Column(
+      children: [
+        const Text(
+          'Your Details',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2D3748),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Since you\'re tracking individually, we just need your earning details',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+        const SizedBox(height: 32),
+
+        // Monthly Income
+        TextFormField(
+          controller: _individualIncomeController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: 'Your Monthly Income (₹) *',
+            prefixIcon: const Icon(Icons.account_balance_wallet),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+          onChanged: (value) {
+            // Store the income for individual tracking
+            if (value.isNotEmpty) {
+              _individualIncome = double.tryParse(value) ?? 0;
+            }
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your monthly income';
+            }
+            final income = double.tryParse(value);
+            if (income == null) {
+              return 'Please enter a valid amount';
+            }
+            if (income <= 0) {
+              return 'Please enter a valid income amount';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCoupleDetailsStep() {
+    return Column(
+      children: [
+        const Text(
+          'Couple Details',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2D3748),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Add your partner\'s details for couple expense tracking',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+        const SizedBox(height: 32),
+
+        // Add Partner Button
+        ElevatedButton.icon(
+          onPressed: _addFamilyMember,
+          icon: const Icon(Icons.person_add),
+          label: const Text('Add Partner'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF667eea),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Partner Details List
+        ...List.generate(_familyMembers.length, (index) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Partner ${index + 1}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => _removeFamilyMember(index),
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Name
+                  TextFormField(
+                    controller: _familyNameControllers[index],
+                    decoration: InputDecoration(
+                      labelText: 'Partner Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Monthly Income
+                  TextFormField(
+                    controller: _familyIncomeControllers[index],
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Monthly Income (₹)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        // Trigger rebuild to update total income display
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Occupation
+                  TextFormField(
+                    controller: _familyOccupationControllers[index],
+                    decoration: InputDecoration(
+                      labelText: 'Occupation',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+
+        // Total Income Display
+        if (_familyMembers.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Card(
+            color: const Color(0xFF667eea),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.account_balance_wallet, color: Colors.white),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Total Couple Income: ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '₹${_calculateTotalIncome().toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFamilyDetailsStepFull() {
     return Column(
       children: [
         const Text(
@@ -707,7 +1182,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         // Role in Family
         DropdownButtonFormField<String>(
-          value: _familyRoles.contains(_selectedRole) ? _selectedRole : 'Individual',
+          value:
+              _familyRoles.contains(_selectedRole)
+                  ? _selectedRole
+                  : 'Individual',
           decoration: InputDecoration(
             labelText: 'Your Role in Family',
             prefixIcon: const Icon(Icons.family_restroom),
@@ -793,9 +1271,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   // Relationship
                   DropdownButtonFormField<String>(
-                    value: _availableFamilyRelationships.contains(_familyRelationships[index]) 
-                        ? _familyRelationships[index] 
-                        : 'Son',
+                    value:
+                        _availableFamilyRelationships.contains(
+                              _familyRelationships[index],
+                            )
+                            ? _familyRelationships[index]
+                            : 'Son',
                     decoration: InputDecoration(
                       labelText: 'Relationship',
                       border: OutlineInputBorder(
@@ -884,6 +1365,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildDependenciesStep() {
+    // Skip dependencies step for Individual and Couple tracking
+    if (_selectedTrackingPreference == 'Individual' ||
+        _selectedTrackingPreference == 'Couple') {
+      return Column(
+        children: [
+          const Text(
+            'Dependencies',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3748),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _selectedTrackingPreference == 'Individual'
+                ? 'Since you\'re tracking individually, you don\'t need to add dependents'
+                : 'Since you\'re tracking as a couple, you don\'t need to add dependents',
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: 32),
+          const Icon(Icons.check_circle, size: 64, color: Color(0xFF667eea)),
+          const SizedBox(height: 16),
+          Text(
+            _selectedTrackingPreference == 'Individual'
+                ? 'Individual tracking setup complete!'
+                : 'Couple tracking setup complete!',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3748),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Full dependencies step for Family tracking
     return Column(
       children: [
         const Text(
@@ -956,9 +1475,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   // Type
                   DropdownButtonFormField<String>(
-                    value: _availableDependencyTypes.contains(_dependencyTypes[index]) 
-                        ? _dependencyTypes[index] 
-                        : 'Housewife',
+                    value:
+                        _availableDependencyTypes.contains(
+                              _dependencyTypes[index],
+                            )
+                            ? _dependencyTypes[index]
+                            : 'Housewife',
                     decoration: InputDecoration(
                       labelText: 'Type',
                       border: OutlineInputBorder(
@@ -1089,6 +1611,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   List<Widget> get _steps => [
     _buildBasicInfoStep(),
+    _buildTrackingPreferenceStep(),
     _buildFamilyDetailsStep(),
     _buildDependenciesStep(),
     _buildBudgetPreferencesStep(),

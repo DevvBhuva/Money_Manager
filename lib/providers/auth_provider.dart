@@ -23,13 +23,37 @@ class AuthProvider extends ChangeNotifier {
     _clearError();
 
     try {
+      print('Checking authentication status...');
+      await AuthService.debugStoredData(); // Debug stored data
       final isLoggedIn = await AuthService.isLoggedIn();
+      print('Is logged in: $isLoggedIn');
+
       if (isLoggedIn) {
-        _currentUser = await AuthService.getCurrentUser();
-        _isAuthenticated = true;
+        final user = await AuthService.getCurrentUser();
+        print('Current user: ${user?.name} (${user?.email})');
+
+        if (user != null) {
+          _currentUser = user;
+          _isAuthenticated = true;
+          print('User authenticated successfully');
+        } else {
+          print('User data is null, clearing authentication');
+          // User data corrupted, clear authentication
+          await AuthService.logout();
+          _currentUser = null;
+          _isAuthenticated = false;
+        }
+      } else {
+        print('User not logged in');
+        _currentUser = null;
+        _isAuthenticated = false;
       }
     } catch (e) {
+      print('Error in _checkAuthStatus: $e');
       _setError('Failed to check authentication status: ${e.toString()}');
+      // Clear authentication on error
+      _currentUser = null;
+      _isAuthenticated = false;
     } finally {
       _setLoading(false);
     }
@@ -40,23 +64,25 @@ class AuthProvider extends ChangeNotifier {
     _clearError();
 
     try {
+      print('Attempting login for: $email');
       final result = await AuthService.login(email, password);
+      print('Login result: ${result['success']}');
 
       if (result['success']) {
         _currentUser = result['user'];
         _isAuthenticated = true;
+        print('Login successful for: ${_currentUser?.name}');
       } else {
+        print('Login failed: ${result['message']}');
         _setError(result['message'] ?? 'Login failed');
       }
 
       return result;
     } catch (e) {
       final errorMsg = 'Login failed: ${e.toString()}';
+      print('Login error: $errorMsg');
       _setError(errorMsg);
-      return {
-        'success': false,
-        'message': errorMsg,
-      };
+      return {'success': false, 'message': errorMsg};
     } finally {
       _setLoading(false);
     }
@@ -94,7 +120,9 @@ class AuthProvider extends ChangeNotifier {
       if (result['success']) {
         _currentUser = result['user'];
         _isAuthenticated = true;
+        print('Signup successful for: ${_currentUser?.name}');
       } else {
+        print('Signup failed: ${result['message']}');
         _setError(result['message'] ?? 'Signup failed');
       }
 
@@ -102,10 +130,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       final errorMsg = 'Signup failed: ${e.toString()}';
       _setError(errorMsg);
-      return {
-        'success': false,
-        'message': errorMsg,
-      };
+      return {'success': false, 'message': errorMsg};
     } finally {
       _setLoading(false);
     }
@@ -127,10 +152,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       if (_currentUser == null) {
         _setError('No user logged in');
-        return {
-          'success': false,
-          'message': 'No user logged in',
-        };
+        return {'success': false, 'message': 'No user logged in'};
       }
 
       final result = await AuthService.updateUser(
@@ -156,10 +178,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       final errorMsg = 'Profile update failed: ${e.toString()}';
       _setError(errorMsg);
-      return {
-        'success': false,
-        'message': errorMsg,
-      };
+      return {'success': false, 'message': errorMsg};
     } finally {
       _setLoading(false);
     }
@@ -174,7 +193,7 @@ class AuthProvider extends ChangeNotifier {
       if (_currentUser != null) {
         await StorageService.clearUserData(_currentUser!.id);
       }
-      
+
       await AuthService.logout();
       _currentUser = null;
       _isAuthenticated = false;
@@ -183,6 +202,34 @@ class AuthProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  // Refresh authentication status (useful for app resume)
+  Future<void> refreshAuthStatus() async {
+    await _checkAuthStatus();
+  }
+
+  // Clear all data and reset app state
+  Future<void> clearAllData() async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      await AuthService.clearAllData();
+      _currentUser = null;
+      _isAuthenticated = false;
+      print('All data cleared and user logged out');
+    } catch (e) {
+      _setError('Failed to clear data: ${e.toString()}');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Force logout and clear all data (for debugging)
+  Future<void> forceLogout() async {
+    print('Force logout called');
+    await clearAllData();
   }
 
   // Helper methods for state management
@@ -208,4 +255,4 @@ class AuthProvider extends ChangeNotifier {
   void clearError() {
     _clearError();
   }
-} 
+}

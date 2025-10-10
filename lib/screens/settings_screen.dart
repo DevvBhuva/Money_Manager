@@ -154,10 +154,10 @@ class SettingsScreen extends StatelessWidget {
                         style: AppConstants.bodySmall.copyWith(color: Colors.white70),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '(${member.relationship})',
-                        style: AppConstants.bodySmall.copyWith(color: Colors.white60),
-                      ),
+                      // Text(
+                      //   '(${member.relationship})',
+                      //   style: AppConstants.bodySmall.copyWith(color: Colors.white60),
+                      // ),
                       if (member.monthlyIncome != null) ...[
                         const SizedBox(width: 8),
                         Text(

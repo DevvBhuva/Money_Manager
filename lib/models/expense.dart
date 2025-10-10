@@ -7,6 +7,7 @@ class Expense {
   final DateTime date;
   final String userId;
   final String type; // 'expense' or 'income'
+  final String? person; // Who made the expense (for family/couple tracking)
 
   Expense({
     required this.id,
@@ -17,6 +18,7 @@ class Expense {
     required this.date,
     required this.userId,
     required this.type,
+    this.person,
   });
 
   factory Expense.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class Expense {
       date: DateTime.parse(json['date'] as String),
       userId: json['userId'] as String,
       type: json['type'] as String? ?? 'expense',
+      person: json['person'] as String?,
     );
   }
 
@@ -42,6 +45,7 @@ class Expense {
       'date': date.toIso8601String(),
       'userId': userId,
       'type': type,
+      'person': person,
     };
   }
 
@@ -54,6 +58,7 @@ class Expense {
     DateTime? date,
     String? userId,
     String? type,
+    String? person,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class Expense {
       date: date ?? this.date,
       userId: userId ?? this.userId,
       type: type ?? this.type,
+      person: person ?? this.person,
     );
   }
 } 

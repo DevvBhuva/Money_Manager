@@ -17,10 +17,12 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final usersJson = prefs.getString(_usersDatabaseKey);
-      
+
       if (usersJson != null) {
         final Map<String, dynamic> usersMap = jsonDecode(usersJson);
-        _users = usersMap.map((key, value) => MapEntry(key, Map<String, dynamic>.from(value)));
+        _users = usersMap.map(
+          (key, value) => MapEntry(key, Map<String, dynamic>.from(value)),
+        );
       } else {
         // Initialize with demo user if no database exists
         _users = {
@@ -76,7 +78,27 @@ class AuthService {
     try {
       await _initializeUsersDatabase();
       final token = await _secureStorage.read(key: _tokenKey);
-      return token != null;
+      final userJson = await _secureStorage.read(key: _userKey);
+
+      print('Auth check - Token: ${token != null}, User: ${userJson != null}');
+
+      // Both token and user data must exist for valid login
+      if (token != null && userJson != null) {
+        // Verify the user data can be parsed
+        try {
+          final userData = jsonDecode(userJson);
+          final user = User.fromJson(userData);
+          print('User authenticated: ${user.name} (${user.email})');
+          return true;
+        } catch (e) {
+          print('Error parsing user data: $e');
+          // Clear corrupted data
+          await _secureStorage.delete(key: _tokenKey);
+          await _secureStorage.delete(key: _userKey);
+          return false;
+        }
+      }
+      return false;
     } catch (e) {
       print('Error checking login status: $e');
       return false;
@@ -99,11 +121,14 @@ class AuthService {
   }
 
   // Login
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     try {
       // Initialize users database if not already done
       await _initializeUsersDatabase();
-      
+
       // Simulate API delay
       await Future.delayed(const Duration(seconds: 1));
 
@@ -129,7 +154,10 @@ class AuthService {
       // Store authentication data
       final token = _generateToken();
       await _secureStorage.write(key: _tokenKey, value: token);
-      await _secureStorage.write(key: _userKey, value: jsonEncode(user.toJson()));
+      await _secureStorage.write(
+        key: _userKey,
+        value: jsonEncode(user.toJson()),
+      );
 
       return {
         'success': true,
@@ -161,7 +189,7 @@ class AuthService {
     try {
       // Initialize users database if not already done
       await _initializeUsersDatabase();
-      
+
       // Simulate API delay
       await Future.delayed(const Duration(seconds: 1));
 
@@ -175,10 +203,7 @@ class AuthService {
 
       // Validate password confirmation
       if (password != confirmPassword) {
-        return {
-          'success': false,
-          'message': 'Passwords do not match.',
-        };
+        return {'success': false, 'message': 'Passwords do not match.'};
       }
 
       // Create new user
@@ -191,7 +216,8 @@ class AuthService {
         'phoneNumber': phoneNumber,
         'createdAt': DateTime.now().toIso8601String(),
         'roleInFamily': roleInFamily,
-        'familyMembers': familyMembers.map((member) => member.toJson()).toList(),
+        'familyMembers':
+            familyMembers.map((member) => member.toJson()).toList(),
         'dependencies': dependencies.map((dep) => dep.toJson()).toList(),
         'totalFamilyIncome': totalFamilyIncome,
         'budgetPreferences': budgetPreferences,
@@ -199,7 +225,7 @@ class AuthService {
 
       // Add to simulated database
       _users[email] = userData;
-      
+
       // Save the updated database
       await _saveUsersDatabase();
 
@@ -209,7 +235,10 @@ class AuthService {
       // Store authentication data
       final token = _generateToken();
       await _secureStorage.write(key: _tokenKey, value: token);
-      await _secureStorage.write(key: _userKey, value: jsonEncode(user.toJson()));
+      await _secureStorage.write(
+        key: _userKey,
+        value: jsonEncode(user.toJson()),
+      );
 
       return {
         'success': true,
@@ -240,7 +269,7 @@ class AuthService {
     try {
       // Initialize users database if not already done
       await _initializeUsersDatabase();
-      
+
       // Find the user by ID
       String? userEmail;
       for (final entry in _users.entries) {
@@ -249,12 +278,9 @@ class AuthService {
           break;
         }
       }
-      
+
       if (userEmail == null) {
-        return {
-          'success': false,
-          'message': 'User not found.',
-        };
+        return {'success': false, 'message': 'User not found.'};
       }
 
       // Update user data
@@ -263,10 +289,12 @@ class AuthService {
         'name': name,
         'email': email,
         'phoneNumber': phoneNumber,
-        'createdAt': _users[userEmail]!['createdAt'], // Keep original creation date
+        'createdAt':
+            _users[userEmail]!['createdAt'], // Keep original creation date
         'password': _users[userEmail]!['password'], // Keep original password
         'roleInFamily': roleInFamily,
-        'familyMembers': familyMembers.map((member) => member.toJson()).toList(),
+        'familyMembers':
+            familyMembers.map((member) => member.toJson()).toList(),
         'dependencies': dependencies.map((dep) => dep.toJson()).toList(),
         'totalFamilyIncome': totalFamilyIncome,
         'budgetPreferences': budgetPreferences,
@@ -274,13 +302,13 @@ class AuthService {
 
       // Update in database
       _users[userEmail] = userData;
-      
+
       // If email changed, update the key
       if (userEmail != email) {
         _users[email] = userData;
         _users.remove(userEmail);
       }
-      
+
       // Save the updated database
       await _saveUsersDatabase();
 
@@ -288,7 +316,10 @@ class AuthService {
       final user = User.fromJson(userData);
 
       // Update stored authentication data
-      await _secureStorage.write(key: _userKey, value: jsonEncode(user.toJson()));
+      await _secureStorage.write(
+        key: _userKey,
+        value: jsonEncode(user.toJson()),
+      );
 
       return {
         'success': true,
@@ -298,15 +329,55 @@ class AuthService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'An error occurred while updating profile. Please try again.',
+        'message':
+            'An error occurred while updating profile. Please try again.',
       };
     }
   }
 
   // Logout
   static Future<void> logout() async {
-    await _secureStorage.delete(key: _tokenKey);
-    await _secureStorage.delete(key: _userKey);
+    try {
+      await _secureStorage.delete(key: _tokenKey);
+      await _secureStorage.delete(key: _userKey);
+      await _secureStorage.deleteAll(); // Clear all secure storage
+    } catch (e) {
+      print('Error during logout: $e');
+    }
+  }
+
+  // Clear all user data (for complete reset)
+  static Future<void> clearAllData() async {
+    try {
+      await _secureStorage.deleteAll();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      print('All data cleared successfully');
+    } catch (e) {
+      print('Error clearing all data: $e');
+    }
+  }
+
+  // Debug method to check stored data
+  static Future<void> debugStoredData() async {
+    try {
+      final token = await _secureStorage.read(key: _tokenKey);
+      final userJson = await _secureStorage.read(key: _userKey);
+      print('Debug - Stored token: ${token != null ? 'exists' : 'null'}');
+      print('Debug - Stored user: ${userJson != null ? 'exists' : 'null'}');
+      if (userJson != null) {
+        try {
+          final userData = jsonDecode(userJson);
+          print(
+            'Debug - User data: ${userData['name']} (${userData['email']})',
+          );
+        } catch (e) {
+          print('Debug - Error parsing user data: $e');
+        }
+      }
+    } catch (e) {
+      print('Debug - Error reading stored data: $e');
+    }
   }
 
   // Generate a simple token (in real app, this would be from server)
@@ -329,4 +400,4 @@ class AuthService {
   static bool isValidName(String name) {
     return name.trim().length >= 2;
   }
-} 
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/app_constants.dart';
 import '../utils/date_utils.dart';
 import '../utils/validation_utils.dart';
@@ -19,6 +20,37 @@ class ExpensesScreenState extends State<ExpensesScreen> {
   // Use constants from AppConstants
   List<String> get _expenseCategories => AppConstants.expenseCategories;
   List<String> get _incomeCategories => AppConstants.incomeCategories;
+
+  // Get available people based on tracking preference
+  List<String> _getAvailablePeople(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+
+    if (user == null) return [];
+
+    // Use a Set to avoid duplicates
+    Set<String> peopleSet = {};
+
+    // Add user's name
+    peopleSet.add(user.name);
+
+    // Add family members if tracking preference is Family or Couple
+    if (user.familyMembers.isNotEmpty) {
+      for (var member in user.familyMembers) {
+        peopleSet.add(member.name);
+      }
+    }
+
+    // Add dependencies if tracking preference is Family
+    if (user.dependencies.isNotEmpty) {
+      for (var dependency in user.dependencies) {
+        peopleSet.add(dependency.name);
+      }
+    }
+
+    // Convert Set to List to maintain order
+    return peopleSet.toList();
+  }
 
   @override
   void initState() {
@@ -130,6 +162,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
       text: expense?.description ?? '',
     );
     String? selectedCategory = expense?.category;
+    String? selectedPerson = expense?.person;
 
     showDialog(
       context: context,
@@ -183,6 +216,50 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // Person dropdown (only show if not individual tracking)
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      final user = authProvider.currentUser;
+                      final availablePeople = _getAvailablePeople(context);
+
+                      // Don't show person dropdown for individual tracking
+                      if (user?.familyMembers.isEmpty == true &&
+                          user?.dependencies.isEmpty == true) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            value: selectedPerson,
+                            decoration: const InputDecoration(
+                              labelText: 'Who made this expense?',
+                              border: OutlineInputBorder(),
+                            ),
+                            hint: const Text('Select person'),
+                            items:
+                                availablePeople.map((person) {
+                                  return DropdownMenuItem(
+                                    value: person,
+                                    child: Text(person),
+                                  );
+                                }).toList(),
+                            onChanged: (value) {
+                              selectedPerson = value;
+                            },
+                            validator: (value) {
+                              if (availablePeople.isNotEmpty &&
+                                  (value == null || value.isEmpty)) {
+                                return 'Please select a person';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    },
+                  ),
                   TextField(
                     controller: descriptionController,
                     maxLines: 3,
@@ -244,6 +321,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                       date: DateTime.now(),
                       userId: '1',
                       type: 'expense',
+                      person: selectedPerson,
                     );
                     expenseProvider.addExpense(newExpense);
                   } else {
@@ -253,6 +331,7 @@ class ExpensesScreenState extends State<ExpensesScreen> {
                       amount: amount,
                       category: selectedCategory!,
                       description: description,
+                      person: selectedPerson,
                     );
                     expenseProvider.updateExpense(updatedExpense);
                   }

@@ -119,7 +119,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
         final budgetAmount = budgetInfo['amount'];
         final budgetLabel = budgetInfo['label'];
-        final periodLabel = budgetInfo['periodLabel'];
 
         final now = DateTime.now();
         final spentAmount = _calculateSpentAmount(
@@ -181,21 +180,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Spent Amount - Bold and Big
                         Text(
-                          AppDateUtils.formatCurrency(budgetAmount),
-                          style: const TextStyle(
-                            fontSize: 28,
+                          AppDateUtils.formatCurrency(spentAmount),
+                          style: TextStyle(
+                            fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF667eea),
+                            color:
+                                isOverBudget
+                                    ? Colors.red.shade700
+                                    : const Color(0xFF667eea),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Spent $periodLabel: ${AppDateUtils.formatCurrency(spentAmount)} / ${AppDateUtils.formatCurrency(budgetAmount)}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF718096),
+                          'Amount Spent',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color:
+                                isOverBudget
+                                    ? Colors.red.shade600
+                                    : const Color(0xFF667eea),
                           ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Total Budget and Remaining Budget
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Budget',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF718096),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    AppDateUtils.formatCurrency(budgetAmount),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2D3748),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Remaining',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF718096),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    AppDateUtils.formatCurrency(
+                                      budgetAmount - spentAmount,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          isOverBudget
+                                              ? Colors.red.shade700
+                                              : const Color(0xFF48bb78),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         ClipRRect(

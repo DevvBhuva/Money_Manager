@@ -2,6 +2,8 @@
 
 A comprehensive Flutter application for personal finance management with secure authentication, modern UI, and intelligent expense tracking by person. Perfect for individuals, couples, and families to manage their finances effectively.
 
+![Dahsboard page](Screnshots/Screenshot 2025-10-10 111257.png)
+
 ## 🌟 Key Features
 
 ### 🔐 **Advanced Authentication System**

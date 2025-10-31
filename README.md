@@ -1,9 +1,15 @@
 # 💰 Money Manager
 
 A comprehensive Flutter application for personal finance management with secure authentication, modern UI, and intelligent expense tracking by person. Perfect for individuals, couples, and families to manage their finances effectively.
----
-![Dahsboard page](Screnshots/Screenshot 2025-10-10 111257.png)
----
+
+## Demo Screenshot
+Here is the main view of the application:
+
+![Login Page](Screnshots/login.png)
+![Dahsboard page](Screnshots/Dashboard.png)
+![Expense list page](Screnshots/Expence.png)
+![Report Page](Screnshots/Reprt2.png)
+
 ## 🌟 Key Features
 
 ### 🔐 **Advanced Authentication System**
